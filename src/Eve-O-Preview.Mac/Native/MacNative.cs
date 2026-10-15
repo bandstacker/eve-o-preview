@@ -92,6 +92,8 @@ internal static unsafe partial class MacNative
     public static partial void ThumbnailSetBounds(long id, double x, double y, double width, double height);
     [LibraryImport(Library, EntryPoint = "eom_thumbnail_set_frame_rate")]
     public static partial void ThumbnailSetFrameRate(long id, int fps);
+    [LibraryImport(Library, EntryPoint = "eom_thumbnail_set_source_rect")]
+    public static partial void ThumbnailSetSourceRect(long id, double x, double y, double width, double height);
     [LibraryImport(Library, EntryPoint = "eom_thumbnail_set_crop_top")]
     public static partial void ThumbnailSetCropTop(long id, double points);
     [LibraryImport(Library, EntryPoint = "eom_thumbnail_update")]

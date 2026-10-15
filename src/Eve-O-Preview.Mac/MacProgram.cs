@@ -69,6 +69,7 @@ static class MacProgram
         macSettings.Changed += () => MacLiveThumbnail.Configure(macSettings.PreviewFrameRate, macSettings.TitleBarCropPoints);
         container.Resolve<MainFormPresenter>();
         var workspace = container.Resolve<WorkspaceWindow>();
+        container.Resolve<EveOPreview.Mac.Mirrors.MirrorManager>().Start();
         lifetime.MainWindow = workspace;
         workspace.Opened += (_, _) => RequestMissingPermissions(workspace);
         // Opening the app again (Finder, Spotlight, Launchpad) shows settings, as the menu-bar item
@@ -76,7 +77,8 @@ static class MacProgram
         if (Application.Current.TryGetFeature(typeof(IActivatableLifetime)) is IActivatableLifetime activatable)
             activatable.Activated += (_, e) => { if (e.Kind == ActivationKind.Reopen) workspace.RestoreWorkspace(); };
         if (args.Contains("--debug-harness"))
-            _ = new DebugHarness(container.Resolve<IThumbnailManager>(), container.Resolve<IProcessMonitor>(), workspace, Log.Logger);
+            _ = new DebugHarness(container.Resolve<IThumbnailManager>(), container.Resolve<IProcessMonitor>(), workspace,
+                container.Resolve<EveOPreview.Mac.Mirrors.MirrorManager>(), Log.Logger);
         int exit = lifetime.Start(args);
         MacNative.AudioUnmuteAll();
         return exit;
@@ -170,6 +172,9 @@ static class MacProgram
         builder.RegisterType<MacProcessMonitor>().AsSelf().As<IProcessMonitor>().SingleInstance();
         builder.RegisterType<MacEveClientUserIdReader>().AsSelf().SingleInstance();
         builder.RegisterType<MacModule>().AsSelf().SingleInstance();
+        builder.RegisterType<EveOPreview.Mac.Mirrors.MirrorStore>().AsSelf().SingleInstance();
+        builder.RegisterType<EveOPreview.Mac.Mirrors.MirrorManager>().AsSelf().SingleInstance();
+        builder.RegisterType<EveOPreview.Mac.Mirrors.MirrorModule>().AsSelf().SingleInstance();
 
         MediatR.Mediator.LicenseKey = "Community";
         builder.Register(ctx => new AutofacServiceProvider(ctx.Resolve<ILifetimeScope>())).As<IServiceProvider>().InstancePerLifetimeScope();

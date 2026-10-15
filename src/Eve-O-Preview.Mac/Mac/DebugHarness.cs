@@ -26,10 +26,12 @@ internal sealed class DebugHarness
     private readonly WorkspaceWindow _workspace;
     private readonly ILogger _logger;
     private readonly DispatcherTimer _timer;
+    private readonly Mirrors.MirrorManager _mirrors;
 
-    public DebugHarness(IThumbnailManager thumbnails, IProcessMonitor processes, WorkspaceWindow workspace, ILogger logger)
+    public DebugHarness(IThumbnailManager thumbnails, IProcessMonitor processes, WorkspaceWindow workspace,
+        Mirrors.MirrorManager mirrors, ILogger logger)
     {
-        _thumbnails = thumbnails; _processes = processes; _workspace = workspace; _logger = logger;
+        _thumbnails = thumbnails; _processes = processes; _workspace = workspace; _mirrors = mirrors; _logger = logger;
         Directory.CreateDirectory(_folder);
         _timer = new DispatcherTimer { Interval = TimeSpan.FromMilliseconds(300) };
         _timer.Tick += (_, _) => Poll();
@@ -123,6 +125,14 @@ internal sealed class DebugHarness
                         .ContinueWith(t => _logger.Information("Debug combat logs: {Success} {Message}", t.Result.Success, t.Result.Message));
                 break;
             case "windows": File.WriteAllText(Path.Combine(_folder, "windows.txt"), MacNative.DebugDescribeWindows()); break;
+            case "mirror-create":
+                _mirrors.CreateAsync(argument).ContinueWith(t => _logger.Information("Debug mirror-create: {Result}", t.Result ?? "ok"));
+                break;
+            case "mirror-command":
+                // mirror-command INDEX COMMAND
+                var mc = argument.Split(' ', 2);
+                if (int.TryParse(mc[0], out int mi) && mi < _mirrors.Mirrors.Count) _ = _mirrors.Execute(_mirrors.Mirrors[mi].Id, mc[1]);
+                break;
             case "open-settings": _workspace.RestoreWorkspace(); break;
             case "navigate": _workspace.RestoreWorkspace(); _workspace.Workspace.Navigate(argument); break;
             case "hide-settings": _workspace.Hide(); break;
@@ -147,6 +157,9 @@ internal sealed class DebugHarness
         var (px, py) = MacNative.PointerLocation();
         text.AppendLine($"pointer {px},{py}");
         }
+        foreach (var mirror in _mirrors.Mirrors)
+            text.AppendLine($"mirror '{mirror.Name}' source='{mirror.SourceTitle}' area={mirror.SourceX},{mirror.SourceY} {mirror.SourceWidth}x{mirror.SourceHeight} " +
+                $"window={mirror.X},{mirror.Y} {mirror.Width}x{mirror.Height} opacity={mirror.Opacity} fps={mirror.FrameRate}");
         if (_workspace.Backend is IWorkspaceCombatLogs combat)
         {
             var snapshot = combat.ReadLogs();

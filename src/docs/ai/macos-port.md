@@ -69,6 +69,15 @@ Own NSWindow pointers are always above the 32-bit range on arm64; `User32NativeM
 | Settings window and tray | macOS `WorkspaceWindow` (same shared `WorkspaceView`, no Windows session/DWM handling) with an Avalonia `TrayIcon` (`NSStatusItem`) and a `macOS` workspace module (permissions, Windows import, title-bar crop). |
 | Character account IDs | `MacEveClientUserIdReader`: launcher arguments through `KERN_PROCARGS2`, parsed by upstream `EveClientUserIdReader.ExtractUserId`. |
 
+### UI mirrors
+
+[Mirrors/](../../Eve-O-Preview.Mac/Mirrors/) adds macOS-only UI mirrors: live crops of one client window in their own floating windows.
+
+- `MirrorDefinition` stores the source title, the source rectangle in points relative to the client window's top-left corner (title bar included, matching ScreenCaptureKit window coordinates) and the mirror frame. `MirrorStore` keeps them in `EVE-O Preview.mirrors.json` beside the profile JSON, so Windows saving the profile cannot drop them.
+- `MirrorManager` reloads on profile switches and, every 500 ms, shows each mirror whose client runs while `IsTemporarilyHidingAllThumbnails` is off. Creating or reselecting activates the client through the shared thumbnail activation path, captures a still and opens `RegionSelector` over the client window; selecting on a still keeps previews from hiding the game UI. Focus returns to the client afterwards.
+- `MirrorWindow` is nonactivating (`WindowsPreviewWindowAdapter`) and draws the stream with `eom_thumbnail_set_source_rect`. Left drag moves, edge drag resizes with the source aspect ratio, click activates the client, right-click opens the themed menu. Geometry is saved when a gesture ends.
+- `MirrorModule` registers the **UI Mirrors** workspace page; the menu bar has **New UI mirror...**.
+
 ### macOS settings
 
 Stored in `EVE-O Preview.macos.json` beside the global settings file and bound through `WindowsWorkspaceBackend.BuildPlatformSettings`:
@@ -111,13 +120,13 @@ The bundle is signed with `CodesignIdentity` (default `EVE-O Preview Dev`); pass
 
 ### Test harness and mock client
 
-`--debug-harness` enables [DebugHarness](../../Eve-O-Preview.Mac/Mac/DebugHarness.cs): each line written to `~/Library/Application Support/EVE-O Preview/debug/command.txt` runs on the UI thread (`state`, `snapshot`, `click`, `minimize`, `move`, `mouse`, `key`, `cmd`, `setting`, `combatlogs`, `navigate`, `windows`, `activate-check`). Screenshots use the app's own Screen Recording grant; key and mouse events use its Accessibility grant and travel through the real event taps. Never enable it in normal launches.
+`--debug-harness` enables [DebugHarness](../../Eve-O-Preview.Mac/Mac/DebugHarness.cs): each line written to `~/Library/Application Support/EVE-O Preview/debug/command.txt` runs on the UI thread (`state`, `snapshot`, `click`, `minimize`, `move`, `mouse`, `key`, `cmd`, `setting`, `combatlogs`, `navigate`, `windows`, `activate-check`, `mirror-create`, `mirror-command`). Screenshots use the app's own Screen Recording grant; key and mouse events use its Accessibility grant and travel through the real event taps. Never enable it in normal launches.
 
 [Eve-O-Mock.Mac](../../tests/Eve-O-Mock.Mac/README.md) builds an `ExeFile` executable that opens an `EVE - <Name>` window with animated content, optional sound and optional Gamelog output.
 
 ### Validated with the mock client (macOS 26, Apple Silicon)
 
-Discovery and renames; live previews with overlays and correct stretching; click-to-switch from an inactive host without activating it (window frontmost within one 25 ms poll); Command-click hide and click restore; context menu without focus change; Move mode, hover zoom, persisted layouts; regions; login-screen client; other applications; cycle-group hotkey capture (`Ctrl+F1` from Command-F1) and cycling; background policy (background client threads at priority 4, active client unchanged); background mute tap creation; live Gamelog ingestion and DPS/alpha augments; settings pages; menu-bar item; reopen to show settings; Windows host and tests still compile.
+Discovery and renames; live previews with overlays and correct stretching; click-to-switch from an inactive host without activating it (window frontmost within one 25 ms poll); Command-click hide and click restore; context menu without focus change; Move mode, hover zoom, persisted layouts; regions; login-screen client; other applications; cycle-group hotkey capture (`Ctrl+F1` from Command-F1) and cycling; background policy (background client threads at priority 4, active client unchanged); background mute tap creation; live Gamelog ingestion and DPS/alpha augments; settings pages; menu-bar item; reopen to show settings; UI mirror creation, reselection, zoom, move/resize and persistence; Windows host and tests still compile.
 
 Still unverified: the real EVE client's process/bundle names, window titles, log folder, title-bar height and audio behavior; whether the mute tap is audibly silent on every output device; mixed-DPI multi-monitor layouts; Developer ID signing.
 

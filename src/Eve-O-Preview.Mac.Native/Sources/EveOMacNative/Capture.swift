@@ -52,6 +52,7 @@ final class LiveThumbnail: NSObject, SCStreamOutput, SCStreamDelegate {
     private var pixelSize = CGSize(width: 256, height: 144)
     private var fps: Int32 = 15
     private var cropTop: Double = 0
+    private var sourceRect: CGRect?
     private var currentFrame: CMSampleBuffer?
     private var starting = false
     private(set) var failed = false
@@ -88,6 +89,11 @@ final class LiveThumbnail: NSObject, SCStreamOutput, SCStreamDelegate {
         if value != cropTop { cropTop = max(0, value); reconfigure() }
     }
 
+    /// Captures only this rectangle of the source window (points, top-left origin); nil captures all.
+    func setSourceRect(_ rect: CGRect?) {
+        if rect != sourceRect { sourceRect = rect; reconfigure() }
+    }
+
     private func configuration(for window: SCWindow?) -> SCStreamConfiguration {
         let config = SCStreamConfiguration()
         config.width = Int(pixelSize.width)
@@ -99,7 +105,12 @@ final class LiveThumbnail: NSObject, SCStreamOutput, SCStreamDelegate {
         config.scalesToFit = true
         config.preservesAspectRatio = false
         config.capturesAudio = false
-        if cropTop > 0, let window, window.frame.height > cropTop {
+        if let rect = sourceRect, let window {
+            // Keep the selection inside the window if the client shrank since it was drawn.
+            let bounds = CGRect(origin: .zero, size: window.frame.size)
+            let clipped = rect.intersection(bounds)
+            if !clipped.isNull, clipped.width >= 4, clipped.height >= 4 { config.sourceRect = clipped }
+        } else if cropTop > 0, let window, window.frame.height > cropTop {
             config.sourceRect = CGRect(x: 0, y: cropTop, width: window.frame.width, height: window.frame.height - cropTop)
         }
         return config
@@ -224,6 +235,11 @@ public func eom_thumbnail_set_bounds(_ id: Int64, _ x: Double, _ y: Double, _ wi
 
 @_cdecl("eom_thumbnail_set_frame_rate")
 public func eom_thumbnail_set_frame_rate(_ id: Int64, _ fps: Int32) { onMain { thumbnails[id]?.setFrameRate(fps) } }
+
+@_cdecl("eom_thumbnail_set_source_rect")
+public func eom_thumbnail_set_source_rect(_ id: Int64, _ x: Double, _ y: Double, _ width: Double, _ height: Double) {
+    onMain { thumbnails[id]?.setSourceRect(width > 0 && height > 0 ? CGRect(x: x, y: y, width: width, height: height) : nil) }
+}
 
 @_cdecl("eom_thumbnail_set_crop_top")
 public func eom_thumbnail_set_crop_top(_ id: Int64, _ points: Double) { onMain { thumbnails[id]?.setCropTop(points) } }

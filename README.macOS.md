@@ -49,6 +49,12 @@ Everything works as described in the [main guide](README.md), with these Mac dif
 | Selective sound muting (jump tunnel, warp-in) | Not available. **Mute background clients** silences every client except the active one. |
 | Compatibility capture, Enhanced graphics | Not needed; macOS always uses live capture and the standard overlay graphics. |
 
+### UI Mirrors
+
+A UI mirror shows one area of a client window, for example Local chat, in its own window. Open **UI Mirrors** in settings (or **New UI mirror...** in the menu bar), choose a character and click **Select area...**. EVE-O brings that client to the front and shows a still of its window: drag a box over the area and release. Esc cancels.
+
+The mirror then works like a preview: drag it to move, drag an edge or corner to resize (proportionally, so text stays sharp and undistorted), click it to switch to that client, and right-click for **Reselect area**, **Actual size**, opacity, update rate and **Remove**. Mirrors belong to the current profile, show while their client runs and hide with **Hide all previews**. The area is fixed relative to the client window, so reselect it after moving or resizing that window inside EVE.
+
 ### Bringing Windows profiles over
 
 Copy your Windows `EVE-O Preview` folder (or just its `Profiles` folder) to the Mac, open the **macOS** page, enter your Windows display size and choose **Choose folder...**. Profiles keep their cycle groups, colors and hotkeys; positions and sizes are scaled to your Mac's main display. Imported profiles never overwrite existing ones.

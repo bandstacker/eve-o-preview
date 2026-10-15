@@ -40,7 +40,7 @@ public sealed class WorkspaceWindow : Window, IMainFormView, IAsyncSettingsView,
     public WorkspaceWindow(IClassicDesktopStyleApplicationLifetime lifetime, ILogger logger, IMediator mediator,
         IConfigurationStorage storage, IThumbnailConfiguration configuration, IProfileManager profiles,
         ApplicationPreferences preferences, IWorkspacePortraitProvider portraits, Services.IProcessMonitor processes,
-        Mac.MacModule macModule, IWorkspacePreviewCapture previewCapture = null,
+        Mac.MacModule macModule, Mac.Mirrors.MirrorModule mirrorModule, IWorkspacePreviewCapture previewCapture = null,
         CharacterIdentityCache characters = null, Services.IThumbnailManager thumbnails = null,
         IWorkspaceCombatLogs combatLogs = null, IWorkspaceStaticData staticData = null)
     {
@@ -53,6 +53,7 @@ public sealed class WorkspaceWindow : Window, IMainFormView, IAsyncSettingsView,
         var modules = new List<WorkspaceModule>();
         if (combatLogs is not null) modules.Add(CombatLogView.CreateModule());
         modules.Add(RegionsView.CreateModule());
+        modules.Add(mirrorModule.Create());
         modules.Add(macModule.Create());
         _workspace = new WorkspaceView(Backend, modules);
         Content = _workspace;
@@ -60,6 +61,7 @@ public sealed class WorkspaceWindow : Window, IMainFormView, IAsyncSettingsView,
         AddMenu(menu, "Open EVE-O Preview", RestoreWorkspace);
         AddMenu(menu, "Hide / show previews", () => ToggleHideAllActiveClients?.Invoke());
         AddMenu(menu, "Hide all clients", () => MinimizeAllClients?.Invoke());
+        AddMenu(menu, "New UI mirror...", () => { RestoreWorkspace(); _workspace.Navigate(Mac.Mirrors.MirrorModule.Id); });
         menu.Items.Add(new NativeMenuItemSeparator());
         AddMenu(menu, "Quit EVE-O Preview", () => ApplicationExitRequested?.Invoke());
         _tray = new TrayIcon { Icon = Icon, ToolTipText = "EVE-O Preview", Menu = menu, IsVisible = true };

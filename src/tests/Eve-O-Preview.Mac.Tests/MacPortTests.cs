@@ -120,3 +120,47 @@ public sealed class EveClientDetectionTests
         Assert.False(MacProcessMonitor.IsEveClient(Window("EVE - notes.txt", "TextEdit", "com.apple.TextEdit", "TextEdit")));
     }
 }
+
+public sealed class MirrorStoreTests
+{
+    [Fact]
+    public void MirrorsRoundTripPerProfileWithoutComputedFields()
+    {
+        string folder = Path.Combine(Path.GetTempPath(), "eveo-mirrors-" + Guid.NewGuid().ToString("N"));
+        try
+        {
+            var store = new EveOPreview.Mac.Mirrors.MirrorStore(Serilog.Core.Logger.None);
+            Assert.Empty(store.Load(folder));
+            var mirror = new EveOPreview.Mac.Mirrors.MirrorDefinition
+            {
+                Name = "Local", SourceTitle = "EVE - Pilot One", SourceX = 20, SourceY = 40, SourceWidth = 480, SourceHeight = 160,
+                X = 13, Y = 568, Width = 240, Height = 80, Opacity = 0.8, FrameRate = 2,
+            };
+            store.Save(folder, [mirror]);
+            string json = File.ReadAllText(Path.Combine(folder, EveOPreview.Mac.Mirrors.MirrorStore.FileName));
+            Assert.DoesNotContain("\"Zoom\"", json);
+            Assert.DoesNotContain("\"Character\"", json);
+            var loaded = Assert.Single(store.Load(folder));
+            Assert.Equal(mirror, loaded);
+            Assert.Equal("Pilot One", loaded.Character);
+            Assert.Equal(0.5, loaded.Zoom);
+        }
+        finally { if (Directory.Exists(folder)) Directory.Delete(folder, recursive: true); }
+    }
+
+    [Fact]
+    public void InvalidMirrorsAreIgnored()
+    {
+        string folder = Path.Combine(Path.GetTempPath(), "eveo-mirrors-" + Guid.NewGuid().ToString("N"));
+        try
+        {
+            Directory.CreateDirectory(folder);
+            File.WriteAllText(Path.Combine(folder, EveOPreview.Mac.Mirrors.MirrorStore.FileName),
+                """[{"SourceTitle":"","SourceWidth":100,"SourceHeight":100},{"SourceTitle":"EVE - A","SourceWidth":2,"SourceHeight":100}]""");
+            Assert.Empty(new EveOPreview.Mac.Mirrors.MirrorStore(Serilog.Core.Logger.None).Load(folder));
+            File.WriteAllText(Path.Combine(folder, EveOPreview.Mac.Mirrors.MirrorStore.FileName), "not json");
+            Assert.Empty(new EveOPreview.Mac.Mirrors.MirrorStore(Serilog.Core.Logger.None).Load(folder));
+        }
+        finally { Directory.Delete(folder, recursive: true); }
+    }
+}
