@@ -22,7 +22,7 @@ public sealed partial class WorkspaceView
 
     private void BuildAdvancedPreviewEditor(Panel parent)
     {
-        if (!_theme.Legacy) BuildPreviewGraphicsEditor(parent);
+        if (!_theme.Legacy && SettingCatalog.Find("PreviewOverlayRenderer") is not null) BuildPreviewGraphicsEditor(parent);
         parent.Children.Add(Card(new StackPanel { Spacing = 10, Children = {
             Text("Arranging & hiding previews", 14, _theme.Text, true),
             PreviewToggle("EnableThumbnailSnap", "Snap previews together"),
@@ -35,13 +35,17 @@ public sealed partial class WorkspaceView
             FieldGrid("*,*", NumberField("ThumbnailMinimumWidth", "Minimum width"), NumberField("ThumbnailMinimumHeight", "Minimum height")),
             FieldGrid("*,*", NumberField("ThumbnailMaximumWidth", "Maximum width"), NumberField("ThumbnailMaximumHeight", "Maximum height"))
         } }, new Thickness(14)));
-        parent.Children.Add(Card(new StackPanel { Spacing = 10, Children = {
+        var capture = new StackPanel { Spacing = 10, Children = {
             Text("Capture & client detection", 14, _theme.Text, true),
             NumberField("ThumbnailRefreshPeriod", "Client check interval (ms)"),
             Text("This controls discovery and property updates, not game FPS or live preview frame rate.", 11, _theme.Muted),
-            PreviewToggle("EnableCompatibilityMode", "Use compatibility capture"),
-            Text("Uses still-image previews when live previews do not work. Updates are slower; changing this recreates preview windows.", 11, _theme.Muted)
-        } }, new Thickness(14)));
+        } };
+        if (SettingCatalog.Find("EnableCompatibilityMode") is not null)
+        {
+            capture.Children.Add(PreviewToggle("EnableCompatibilityMode", "Use compatibility capture"));
+            capture.Children.Add(Text("Uses still-image previews when live previews do not work. Updates are slower; changing this recreates preview windows.", 11, _theme.Muted));
+        }
+        parent.Children.Add(Card(capture, new Thickness(14)));
         parent.Children.Add(Card(new StackPanel { Spacing = 10, Children = {
             Text("Login preview position", 14, _theme.Text, true),
             Text("Starting position for login-screen previews. Negative coordinates support displays above or left of the main display.", 11, _theme.Muted),

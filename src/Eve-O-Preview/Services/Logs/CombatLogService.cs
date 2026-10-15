@@ -341,6 +341,15 @@ public sealed partial class CombatLogService : IWorkspaceCombatLogs, IDisposable
                 if (!_localTails.TryGetValue(listener, out var tail) || session >= tail.Session || tail.Path.Equals(path, StringComparison.OrdinalIgnoreCase))
                     _localTails[listener] = (path, session > tail.Session ? session : tail.Session, length);
             }
+            // macOS FSEvents coalesces appends to a file that stays open, so follow each
+            // listener's newest Gamelog with the same bounded length probe.
+            if (OperatingSystem.IsMacOS() && !chat && !header.Ambiguous && header.Listener is { } gameListener)
+            {
+                var session = header.Session ?? entries.Select(x => x.Entry.Timestamp).DefaultIfEmpty(DateTimeOffset.MinValue).Max();
+                string key = "\0game:" + gameListener;
+                if (!_localTails.TryGetValue(key, out var tail) || session >= tail.Session || tail.Path.Equals(path, StringComparison.OrdinalIgnoreCase))
+                    _localTails[key] = (path, session > tail.Session ? session : tail.Session, length);
+            }
             if (!header.Ambiguous)
                 // EVE timestamps have one-second precision and writes can be delayed.
                 // Recent newly committed hits trigger a full receipt-time indicator;

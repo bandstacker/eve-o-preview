@@ -4,6 +4,7 @@ using Avalonia.Controls;
 using Avalonia.Media;
 using EveOPreview.Preview;
 using EveOPreview.View.Rendering;
+using EveOPreview.UI.Previews;
 
 namespace EveOPreview.View;
 
@@ -73,7 +74,7 @@ internal sealed class ThumbnailSnapGuideWindow : Window, IDisposable
 
         public override void Render(DrawingContext context)
         {
-            double scale = TopLevel.GetTopLevel(this)?.RenderScaling ?? 1;
+            double scale = PreviewPixels.PerDip(TopLevel.GetTopLevel(this)?.RenderScaling ?? 1);
             Draw(_vertical);
             Draw(_horizontal);
             void Draw(ThumbnailSnapGuide? guide)

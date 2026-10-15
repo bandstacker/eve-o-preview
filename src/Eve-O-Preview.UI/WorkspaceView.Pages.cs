@@ -14,12 +14,15 @@ public sealed partial class WorkspaceView
         var stats = new Grid { ColumnDefinitions = new ColumnDefinitions("*,*,*") };
         AddStat(stats, 0, "PREVIEWS", _snapshot.AllPreviewsHidden ? "Hidden" : _snapshot.Clients.Count(c => c.PreviewVisible).ToString(), _snapshot.AllPreviewsHidden ? "Show all from the header" : "Enabled for this profile");
         AddStat(stats, 1, "CYCLE GROUPS", _snapshot.CycleGroups.Count.ToString(), "Your character sequences");
-        AddStat(stats, 2, "FRAME LIMITER", _snapshot.Settings.GetValueOrDefault("FpsEnabled", "False").Equals("True", StringComparison.OrdinalIgnoreCase) ? "On" : "Off", "Separate limits by client role");
+        bool frameLimits = SettingCatalog.Find("FpsEnabled") is not null;
+        if (frameLimits) AddStat(stats, 2, "FRAME LIMITER", _snapshot.Settings.GetValueOrDefault("FpsEnabled", "False").Equals("True", StringComparison.OrdinalIgnoreCase) ? "On" : "Off", "Separate limits by client role");
+        else AddStat(stats, 2, "CPU AFFINITY", _snapshot.Settings.GetValueOrDefault("EnableAutomaticCpuAffinity", "False").Equals("True", StringComparison.OrdinalIgnoreCase) ? "On" : "Off", "Processor use by client role");
         _page.Children.Add(stats);
         _page.Children.Add(FeatureLink("clients", "Clients", "Show or hide each character's preview.", "Clients"));
         _page.Children.Add(FeatureLink("preview", "Previews, titles & highlights", "Adjust appearance while keeping the preview in view.", "Previews"));
         _page.Children.Add(FeatureLink("cycle", "Cycle groups & shortcuts", "Edit character order and record switching hotkeys.", "Switching"));
-        _page.Children.Add(FeatureLink("performance", "Performance & audio", "Control frame rates, processor affinity and selective muting.", "FpsAudio"));
+        _page.Children.Add(FeatureLink("performance", "Performance & audio", frameLimits
+            ? "Control frame rates, processor affinity and selective muting." : "Control processor use and audio of background clients.", "FpsAudio"));
     }
 
     private void AddStat(Grid grid, int column, string title, string value, string detail)
@@ -48,9 +51,10 @@ public sealed partial class WorkspaceView
     private void RenderPerformance()
     {
         Heading(_theme.Legacy ? "FPS / Audio" : "Performance & audio", "Keep your active character responsive and background clients quiet.");
-        _page.Children.Add(Text("FRAME RATES & PROCESSOR", 10, _theme.Accent, true));
+        bool frameLimits = SettingCatalog.Find("FpsEnabled") is not null;
+        _page.Children.Add(Text(frameLimits ? "FRAME RATES & PROCESSOR" : "PROCESSOR & PREVIEWS", 10, _theme.Accent, true));
         AddSettings("FpsAudio", s => !s.Key.StartsWith("Audio", StringComparison.Ordinal));
-        _page.Children.Add(Text("SELECTIVE AUDIO MUTING", 10, _theme.Accent, true));
+        _page.Children.Add(Text(frameLimits ? "SELECTIVE AUDIO MUTING" : "BACKGROUND AUDIO", 10, _theme.Accent, true));
         AddSettings("FpsAudio", s => s.Key.StartsWith("Audio", StringComparison.Ordinal));
     }
 

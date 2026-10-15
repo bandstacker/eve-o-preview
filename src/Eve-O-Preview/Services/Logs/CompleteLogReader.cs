@@ -25,6 +25,12 @@ public static class CompleteLogReader
 
     public static string Identity(FileStream stream)
     {
+        if (OperatingSystem.IsMacOS())
+        {
+            // APFS/HFS+ birth times change when a log file is replaced at the same path.
+            var file = new FileInfo(stream.Name);
+            return $"{file.FullName}:{file.CreationTimeUtc.Ticks:x16}";
+        }
         if (!GetFileInformationByHandle(stream.SafeFileHandle, out var info))
             throw new IOException("Cannot obtain log file identity.", Marshal.GetExceptionForHR(Marshal.GetHRForLastWin32Error()));
         // The creation time protects against reuse of an NTFS file index after deletion.

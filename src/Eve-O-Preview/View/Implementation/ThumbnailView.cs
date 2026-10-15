@@ -35,6 +35,7 @@ using EveOPreview.Services;
 using EveOPreview.Services.Interop;
 using EveOPreview.View.CustomControl;
 using EveOPreview.View.Rendering;
+using EveOPreview.UI.Previews;
 using MediatR;
 using Color = System.Drawing.Color;
 using Point = System.Drawing.Point;
@@ -243,6 +244,8 @@ public abstract partial class ThumbnailView : Window, IThumbnailView, IDisposabl
     }
 
     internal Canvas ImageSurface { get; } = new() { Background = Brushes.Transparent };
+    // Preview pixels per DIP: render scaling on Windows, 1 on macOS (points).
+    private double PixelScale => PreviewPixels.PerDip(RenderScaling);
     public IntPtr Handle => _native.Handle;
     public bool IsDisposed => _disposed;
     public bool Visible => IsVisible;
@@ -378,7 +381,7 @@ public abstract partial class ThumbnailView : Window, IThumbnailView, IDisposabl
 
     private void ApplySizeLimits()
     {
-        double scale = RenderScaling;
+        double scale = PixelScale;
         MinWidth = Math.Max(1, _minimumSize.Width) / scale;
         MinHeight = Math.Max(1, _minimumSize.Height) / scale;
         MaxWidth = _maximumSize.Width > 0 ? Math.Max(_minimumSize.Width, _maximumSize.Width) / scale : double.PositiveInfinity;
@@ -579,7 +582,7 @@ public abstract partial class ThumbnailView : Window, IThumbnailView, IDisposabl
     private void HighlightThumbnail(bool forceRefresh)
     {
         bool enabled = IsSelected || _isHighlightRequested;
-        int borderWidth = IsSelected ? Math.Max(3, (int)Math.Round(3 * RenderScaling)) : _highlightWidth;
+        int borderWidth = IsSelected ? Math.Max(3, (int)Math.Round(3 * PixelScale)) : _highlightWidth;
         Color borderColor = IsSelected ? Color.Yellow : _highlightColor;
         if (!forceRefresh && enabled == _isHighlightEnabled) return;
         _isHighlightEnabled = enabled;
@@ -818,7 +821,7 @@ public abstract partial class ThumbnailView : Window, IThumbnailView, IDisposabl
             PointerUpdateKind.MiddleButtonPressed => PointerButtons.Middle,
             _ => PointerButtons.None
         };
-        var point = new Point((int)Math.Round(position.X * RenderScaling), (int)Math.Round(position.Y * RenderScaling));
+        var point = new Point((int)Math.Round(position.X * PixelScale), (int)Math.Round(position.Y * PixelScale));
         MouseDownEventHandler(new(button, _keyboardMouseEvents.Buttons, point, _keyboardMouseEvents.Modifiers), _keyboardMouseEvents.Modifiers);
         args.Handled = true;
     }
@@ -871,7 +874,7 @@ public abstract partial class ThumbnailView : Window, IThumbnailView, IDisposabl
                     // DIPs. Keep the click inside the first row at every scale.
                     // An empty rectangle loses its location in Avalonia's popup
                     // transform; a one-DIP anchor retains the actual click point.
-                    thumbnailContextMenu.PlacementRect = new Rect(args.X / RenderScaling, args.Y / RenderScaling, 1, 1);
+                    thumbnailContextMenu.PlacementRect = new Rect(args.X / PixelScale, args.Y / PixelScale, 1, 1);
                     thumbnailContextMenu.HorizontalOffset = -30;
                     thumbnailContextMenu.VerticalOffset = -16;
                     thumbnailContextMenu.PlacementAnchor = Avalonia.Controls.Primitives.PopupPositioning.PopupAnchor.TopLeft;
@@ -1245,7 +1248,7 @@ public abstract partial class ThumbnailView : Window, IThumbnailView, IDisposabl
     private PreviewRect Snap(PreviewRect raw, bool shift)
     {
         CollectSnapTargets(shift);
-        var result = _snap.Move(raw, _snapTargets, (int)Math.Round(8 * RenderScaling), (int)Math.Round(16 * RenderScaling),
+        var result = _snap.Move(raw, _snapTargets, (int)Math.Round(8 * PixelScale), (int)Math.Round(16 * PixelScale),
             shift || !_config.EnableThumbnailSnap);
         ShowSnapGuides(result);
         return result.Bounds;
@@ -1331,7 +1334,7 @@ public abstract partial class ThumbnailView : Window, IThumbnailView, IDisposabl
         var size = Constrain(raw.Width - frame.Width, raw.Height - frame.Height, heightDriven);
         var bounded = Fit(size);
         CollectSnapTargets(shift);
-        var result = _snap.Resize(bounded, _snapTargets, (int)Math.Round(8 * RenderScaling), (int)Math.Round(16 * RenderScaling),
+        var result = _snap.Resize(bounded, _snapTargets, (int)Math.Round(8 * PixelScale), (int)Math.Round(16 * PixelScale),
             // During a group resize, neighbours' left/top edges stay fixed while their sizes change.
             left, right, top, bottom, shift || !_config.EnableThumbnailSnap, leadingTargetsOnly: IsResizingAll);
         bool useHeight = result.HorizontalGuide != null && (result.VerticalGuide == null

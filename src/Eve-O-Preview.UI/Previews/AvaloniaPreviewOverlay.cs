@@ -159,7 +159,7 @@ public sealed class AvaloniaPreviewOverlay : Panel, IOverlayRenderer
 
     private void UpdateScale()
     {
-        _renderScale = _root?.RenderScaling ?? 1;
+        _renderScale = PreviewPixels.PerDip(_root?.RenderScaling ?? 1);
         Width = _pixelSize.Width / _renderScale;
         Height = _pixelSize.Height / _renderScale;
         _sceneCanvas.SetPixelSize(_pixelSize, _renderScale);

@@ -21,7 +21,21 @@ public static class SettingCatalog
         "Diagnostics only - do not use in production. Global input sends shortcut keys to the active application before queuing the hotkey action. Turns off when EVE-O restarts or you select Windows hotkeys.",
         "Hotkeys", SettingKind.Toggle, Aliases: "diagnostic passthrough suppression keyboard hook");
 
-    public static IReadOnlyList<SettingDefinition> All { get; } = new SettingDefinition[]
+    private static IReadOnlyList<SettingDefinition>? _platformAll;
+
+    /// <summary>Settings for the running platform: the portable list, minus settings the host cannot
+    /// implement, with host replacements and additions. Hosts configure this once before showing the UI.</summary>
+    public static IReadOnlyList<SettingDefinition> All => _platformAll ?? Portable;
+
+    public static void ConfigurePlatform(Func<SettingDefinition, bool> supported, IReadOnlyList<SettingDefinition> overrides)
+    {
+        var replaced = overrides.ToDictionary(s => s.Key);
+        var list = Portable.Where(supported).Select(s => replaced.Remove(s.Key, out var replacement) ? replacement : s).ToList();
+        list.AddRange(overrides.Where(s => replaced.ContainsKey(s.Key)));
+        _platformAll = list;
+    }
+
+    private static IReadOnlyList<SettingDefinition> Portable { get; } = new SettingDefinition[]
     {
         new("HotkeyInputMethod", "Hotkey method", "Choose how this profile detects shortcuts: Global input uses a keyboard hook; Windows hotkeys uses shortcuts registered with Windows.", "Hotkeys", SettingKind.Choice, Options: new[] { "Global", "Windows" }, Aliases: "keyboard shortcut input global events register hotkey cycling implementation Windows hotkeys profile"),
         new("GlobalHotkeyTrigger", "Hotkey trigger", "Run this profile's hotkey actions when the shortcut key is pressed or released. Available with Global input.", "Hotkeys", SettingKind.Choice, Options: new[] { "KeyDown", "KeyUp" }, Aliases: "keyboard shortcut press release key down up trigger timing profile"),

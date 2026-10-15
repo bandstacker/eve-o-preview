@@ -75,7 +75,8 @@ public static class NativeMenuTheme
     private static void Apply(ContextMenu menu, bool thumbnail)
     {
         var contrast = new HighContrast { Size = (uint)Marshal.SizeOf<HighContrast>() };
-        bool highContrast = SystemParametersInfo(0x0042, contrast.Size, ref contrast, 0) && (contrast.Flags & 1) != 0;
+        bool highContrast = OperatingSystem.IsWindows()
+            && SystemParametersInfo(0x0042, contrast.Size, ref contrast, 0) && (contrast.Flags & 1) != 0;
         Apply(menu, thumbnail, highContrast, SystemColor);
     }
 

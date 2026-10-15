@@ -7,6 +7,7 @@ using EveOPreview.Input;
 using EveOPreview.Preview;
 using EveOPreview.UI;
 using EveOPreview.View.CustomControl;
+using EveOPreview.UI.Previews;
 
 namespace EveOPreview.View;
 
@@ -53,7 +54,7 @@ public abstract partial class ThumbnailView
         if (!RegionDragIsCurrent) { EndRegionDrag(false); return; }
         _regionDragBypassed = (modifiers & ShortcutKeys.Shift) != 0;
         string candidate = _regionDragBypassed ? null
-            : RegionDockTarget.FindClosest(_regionDockTargets, pointer.X, pointer.Y, (int)Math.Round(12 * RenderScaling));
+            : RegionDockTarget.FindClosest(_regionDockTargets, pointer.X, pointer.Y, (int)Math.Round(12 * PreviewPixels.PerDip(RenderScaling)));
         if (_regionDockCandidate == candidate) return;
         _regionDockCandidate = candidate;
         foreach (var entry in _regionDragHighlights) entry.Value.SetDockTarget(entry.Key == candidate);

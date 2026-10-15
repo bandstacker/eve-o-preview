@@ -7,6 +7,7 @@ using Avalonia.Media;
 using EveOPreview.UI;
 using EveOPreview.Preview;
 using EveOPreview.View.Rendering;
+using EveOPreview.UI.Previews;
 
 namespace EveOPreview.View;
 
@@ -140,7 +141,7 @@ internal sealed class ThumbnailRegionWindow : Window, IDisposable
             if (_collectTargets != null) _collectTargets(_snapTargets);
             else DesktopSnapTargets.Collect(_snapTargets, this, null, null);
         }
-        int acquire = (int)Math.Round(8 * RenderScaling), release = (int)Math.Round(16 * RenderScaling);
+        int acquire = (int)Math.Round(8 * PreviewPixels.PerDip(RenderScaling)), release = (int)Math.Round(16 * PreviewPixels.PerDip(RenderScaling));
         ThumbnailSnapResult result;
         if (_edges == 0)
             result = _snap.Move(new(_origin.X + dx, _origin.Y + dy, _origin.Width, _origin.Height), _snapTargets, acquire, release, bypass);

@@ -541,8 +541,12 @@ public sealed partial class WindowsWorkspaceBackend : IWorkspaceBackend, IWorksp
         Bind("PreviewOverlayRenderer", () => _preferences.PreviewOverlayRenderer, _preferences.SetPreviewOverlayRenderer);
         Bind("TitleFontName", () => _view.TitleFontSettings.Name, x =>
         {
-            using var font = new Font(x, _view.TitleFontSettings.Size);
-            if (!font.FontFamily.Name.Equals(x, StringComparison.OrdinalIgnoreCase)) throw new ArgumentException("That font family is not installed. Choose an installed font.");
+            if (OperatingSystem.IsWindows())
+            {
+                using var font = new Font(x, _view.TitleFontSettings.Size);
+                if (!font.FontFamily.Name.Equals(x, StringComparison.OrdinalIgnoreCase)) throw new ArgumentException("That font family is not installed. Choose an installed font.");
+            }
+            else if (!FontFamilies.Contains(x, StringComparer.OrdinalIgnoreCase)) throw new ArgumentException("That font family is not installed. Choose an installed font.");
             _view.TitleFontSettings.Name = x;
         });
         Bind("TitleFontSize", () => _view.TitleFontSettings.Size, x => _view.TitleFontSettings.Size = (float)Number(x));
@@ -566,7 +570,11 @@ public sealed partial class WindowsWorkspaceBackend : IWorkspaceBackend, IWorksp
             _view.AudioMuteSettings.CustomMutedEventIds = ids;
         });
         Bind("ProfileAccentColor", () => _configuration.UiAccentColor, x => _configuration.UiAccentColor = x);
+        BuildPlatformSettings();
     }
+
+    /// <summary>Optional host-specific bindings (for example the macOS host's settings).</summary>
+    partial void BuildPlatformSettings();
 
     private void Bind(string key, Func<object> read, Action<string> write) => _settings.Add(key, (read, write));
 }
