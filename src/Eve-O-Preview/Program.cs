@@ -100,6 +100,7 @@ namespace EveOPreview
                 // Resolve the presenter before opening so its settings/close callbacks are installed.
                 container.Resolve<MainFormPresenter>();
                 lifetime.MainWindow = container.Resolve<WorkspaceWindow>();
+                container.Resolve<EveOPreview.Mirrors.MirrorManager>().Start();
                 
                 DebuggerSidecar.LaunchTheSideCar();
 
@@ -252,6 +253,8 @@ namespace EveOPreview
             builder.RegisterType<EveOPreview.Services.StaticData.StaticDataService>().AsSelf().As<IWorkspaceStaticData>().SingleInstance();
             builder.RegisterType<EveOPreview.Services.Logs.CombatLogService>().AsSelf().As<IWorkspaceCombatLogs>().SingleInstance();
             builder.RegisterType<WindowsWorkspacePreviewCapture>().As<IWorkspacePreviewCapture>().SingleInstance();
+            builder.RegisterType<EveOPreview.Mirrors.MirrorStore>().AsSelf().SingleInstance();
+            builder.RegisterType<EveOPreview.Mirrors.MirrorManager>().AsSelf().SingleInstance();
 
 
             // Application services

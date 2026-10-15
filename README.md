@@ -45,6 +45,7 @@ This downloads the project's public root certificate and adds it to the computer
 | Choose which characters have previews | **Clients** |
 | Create thumbnails for other applications | **Clients > Other applications > Add application** (Light/Dark) |
 | Dock thumbnails into reusable screen areas | **Regions** (Light/Dark) |
+| Mirror part of a client window, such as Local chat, into its own window | **UI Mirrors** (Light/Dark) |
 | Cycle through EVE login screens | **Switching & hotkeys > Global shortcuts > Cycle login clients** (Light/Dark) |
 | Include linked login screens in a character cycle | Select a cycle group, then **Group shortcuts > Include login clients** (Light/Dark) |
 | Change preview size, opacity or hover zoom | **Previews & layout → Size & zoom** |
@@ -120,6 +121,12 @@ With drag docking enabled, moving an individual thumbnail shows yellow region hi
 With **Dock and undock with right-click drag** enabled, hold a thumbnail's right mouse button and drag it to another highlighted region to transfer it. Dropping away from all regions undocks it at the new position. Turning this option off disables automatic docking and undocking; assigned thumbnails stay locked until you choose **Undock** from the right-click menu. Undock removes the assignment while keeping the current position and size, allowing free movement and resizing. Hover zoom, group selection and Resize all leave docked thumbnails in place. Docked thumbnails are borderless so they fit the yellow outline exactly.
 
 Turn off edit mode when finished. Leaving the Regions page, hiding the workspace or switching profiles closes the yellow boxes. **Remove region** removes its assignments and returns those clients to their saved individual layouts.
+
+### Mirror part of a client with UI Mirrors
+
+A UI mirror shows one area of a client, for example Local chat, in its own always-on-top window. Open **UI Mirrors** in Light or Dark (or choose **New UI mirror...** from the tray icon), pick a character and choose **Select area...**. EVE-O brings that client to the front and shows a still of it: drag a box over the area and release. Escape or a right-click cancels.
+
+The mirror then behaves like a preview: drag it to move, drag an edge or corner to resize it proportionally, click it to switch to that client, and right-click it for **Reselect area**, **Actual size**, opacity and **Remove**. Rename mirrors and set their size on the UI Mirrors page. Mirrors belong to the current profile, show while their client runs and hide with **Hide all previews**. The area is fixed relative to the client window: choose **Reselect area** after moving or resizing that window inside EVE or changing EVE's UI scale.
 
 ### Preview other applications
 

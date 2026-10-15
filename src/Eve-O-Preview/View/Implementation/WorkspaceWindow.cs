@@ -41,22 +41,28 @@ public sealed class WorkspaceWindow : Window, IMainFormView, IAsyncSettingsView,
         IConfigurationStorage storage, IThumbnailConfiguration configuration, IProfileManager profiles,
         ApplicationPreferences preferences, IWorkspacePortraitProvider portraits, IWorkspacePreviewCapture previewCapture = null,
         EveOPreview.Services.Implementation.CharacterIdentityCache characters = null,
-        EveOPreview.Services.IThumbnailManager thumbnails = null, IWorkspaceCombatLogs combatLogs = null, IWorkspaceStaticData staticData = null)
+        EveOPreview.Services.IThumbnailManager thumbnails = null, IWorkspaceCombatLogs combatLogs = null, IWorkspaceStaticData staticData = null,
+        EveOPreview.Mirrors.MirrorManager mirrors = null)
     {
         _lifetime = lifetime;
         _preferences = preferences;
         Title = "EVE-O Preview";
         WindowStartupLocation = WindowStartupLocation.CenterScreen;
         Icon = LoadIcon();
-        Backend = new WindowsWorkspaceBackend(this, this, mediator, storage, configuration, profiles, preferences, logger, portraits, previewCapture, characters, thumbnails, combatLogs, staticData);
-        _workspace = new WorkspaceView(Backend, combatLogs is null
-            ? new[] { RegionsView.CreateModule() } : new[] { CombatLogView.CreateModule(), RegionsView.CreateModule() });
+        Backend = new WindowsWorkspaceBackend(this, this, mediator, storage, configuration, profiles, preferences, logger, portraits, previewCapture, characters, thumbnails, combatLogs, staticData)
+        { MirrorHost = mirrors };
+        var modules = new List<WorkspaceModule>();
+        if (combatLogs is not null) modules.Add(CombatLogView.CreateModule());
+        modules.Add(RegionsView.CreateModule());
+        if (mirrors is not null) modules.Add(MirrorsView.CreateModule());
+        _workspace = new WorkspaceView(Backend, modules);
         Content = _workspace;
         _windowsSession = new WindowsSessionLifetime(EndWindowsSession, logger);
         var menu = new NativeMenu();
         AddMenu(menu, "Open EVE-O Preview", RestoreWorkspace);
         AddMenu(menu, "Hide / show previews", () => ToggleHideAllActiveClients?.Invoke());
         AddMenu(menu, "Minimize all clients", () => MinimizeAllClients?.Invoke());
+        if (mirrors is not null) AddMenu(menu, "New UI mirror...", () => { RestoreWorkspace(); _workspace.Navigate(MirrorsView.ModuleId); });
         menu.Items.Add(new NativeMenuItemSeparator());
         AddMenu(menu, "Exit", () => ApplicationExitRequested?.Invoke());
         _tray = new TrayIcon { Icon = Icon, ToolTipText = "EVE-O Preview", Menu = menu, IsVisible = true };
