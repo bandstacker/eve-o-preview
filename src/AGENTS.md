@@ -13,6 +13,7 @@ This directory is `src/` of the Git repository. Start with [README.md](README.md
 | Preview graphics, native composition, platform backends | [Preview rendering](docs/ai/preview-rendering.md) and [portable contracts](Eve-O-Preview.Preview/AGENTS.md) |
 | Injection, FPS, prediction, native pipe protocol, audio, crash sidecar | [Robin and native integration](docs/ai/robin.md) and [Robin instructions](Eve-O-Preview.Robin/AGENTS.md) |
 | Build, publish, tests, Test Explorer, mock app | [Build and test](docs/ai/build-and-test.md) and [test instructions](tests/AGENTS.md) |
+| macOS host, Swift native library, mock client | [macOS port](docs/ai/macos-port.md) and [macOS host instructions](Eve-O-Preview.Mac/AGENTS.md) |
 | An unfamiliar file, generated resource, or release script | [Source index](docs/ai/source-index.md) |
 
 ## Constraints that matter

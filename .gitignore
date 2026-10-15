@@ -10,6 +10,11 @@ src/.vs/
 temp/**
 src/packages/**
 
+# Swift Package Manager build output (macOS native library and mock client).
+.build/
+.swiftpm/
+Package.resolved
+
 # Local AI working files and generated captures (keep shared AGENTS.md/guides tracked).
 .ai-work/
 .vscode/
