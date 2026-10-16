@@ -91,6 +91,17 @@ internal sealed class DebugHarness
                 if (_thumbnails.GetClientByTitle(mv[2]) is { } moved)
                     moved.ThumbnailLocation = new System.Drawing.Point(int.Parse(mv[0]), int.Parse(mv[1]));
                 break;
+            case "resize":
+                // resize WIDTH HEIGHT TITLE: an individual preview resize, as from the Resize gesture.
+                var rs = argument.Split(' ', 3);
+                if (_thumbnails.GetClientByTitle(rs[2]) is { } resized)
+                {
+                    resized.ThumbnailSize = new System.Drawing.Size(int.Parse(rs[0]), int.Parse(rs[1]));
+                    resized.ThumbnailResized?.Invoke(resized.Id);
+                }
+                break;
+            case "undo": _ = _thumbnails.UndoThumbnailEdit(); break;
+            case "size-all": if (_thumbnails.GetClientByTitle(argument) is { } sized) _ = _thumbnails.UseThumbnailSizeForAll(sized.Id); break;
             case "minimize":
                 if (_thumbnails.GetClientByTitle(argument) is { } minimized) minimized.ThumbnailDeactivated?.Invoke(minimized.Id, false);
                 break;

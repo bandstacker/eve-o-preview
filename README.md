@@ -78,6 +78,8 @@ These gestures apply to the preview under your mouse.
 | Move or resize the selection | Choose **Move** or **Resize** in a selected preview's menu, then click to finish |
 | Remove a preview from the selection | Shift+right-click it again; a normal click outside the selection clears the group |
 | Undo the last preview edit | Right-click any preview and choose **Undo** (Light/Dark) |
+| Give every preview, including new characters, this preview's size | Right-click → **Use for all previews → This size** (Light/Dark); **Undo** restores the previous sizes |
+| Use one character's border color and thumbnail augments for every preview | Right-click → **Use for all previews → This border color and augments** (Light/Dark) |
 | Match one preview to its client | Right-click > **Resize > Reset aspect ratio to client** |
 | Maintain proportions for future resizing | Tick **Resize > Maintain aspect ratio** in any preview menu; applies to all previews |
 | Temporarily keep proportions and bypass snapping | Hold Shift during the resize |

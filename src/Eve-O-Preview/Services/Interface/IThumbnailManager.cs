@@ -30,6 +30,8 @@ namespace EveOPreview.Services
         Task StopAsync(bool sessionEnding) { Stop(); return Task.CompletedTask; }
 
         void UpdateThumbnailsSize();
+        /// <summary>Makes this preview's size the default for every preview and clears per-character sizes (undoable).</summary>
+        Task UseThumbnailSizeForAll(IntPtr id) => Task.CompletedTask;
         void BeginResizeAll(IntPtr id);
         void ToggleThumbnailSelection(IntPtr id);
         void ClearThumbnailSelection();

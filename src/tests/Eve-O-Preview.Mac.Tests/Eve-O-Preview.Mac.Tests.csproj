@@ -18,5 +18,8 @@
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
     </PackageReference>
     <ProjectReference Include="../../Eve-O-Preview.Mac/Eve-O-Preview.Mac.csproj" />
+    <!-- Shared host tests that need no Windows APIs run against the macOS host build too. -->
+    <Compile Include="../Eve-O-Preview.Tests/Infrastructure/Stub.cs" Link="Shared/Stub.cs" />
+    <Compile Include="../Eve-O-Preview.Tests/Checks/UsePreviewForAllTests.cs" Link="Shared/UsePreviewForAllTests.cs" />
   </ItemGroup>
 </Project>

@@ -873,6 +873,21 @@ namespace EveOPreview.Services
                 _ = _mediator.Publish(new ThumbnailActiveSizeUpdated(_configuration.ThumbnailSize));
         }
 
+        public async Task UseThumbnailSizeForAll(IntPtr id)
+        {
+            if (!_thumbnailViews.TryGetValue(id, out var source) || _configuration.GetThumbnailRegion(source.Title) != null) return;
+            var size = source.ThumbnailSize;
+            // One ResizeAll edit: Undo restores the previous default and every per-character size.
+            BeginThumbnailEdit(id, ThumbnailEditKind.ResizeAll);
+            foreach (var title in _configuration.PerClientThumbnailSizes.Keys.ToArray())
+                if (_configuration.GetThumbnailRegion(title) == null) _configuration.PerClientThumbnailSizes.Remove(title);
+            _configuration.ThumbnailSize = size;
+            ApplyThumbnailSizes();
+            CompleteThumbnailEdit(id);
+            await _mediator.Publish(new ThumbnailActiveSizeUpdated(size));
+            await _mediator.Send(new SaveConfiguration());
+        }
+
         private Size ScaleSize(Size size, double scale)
         {
             var min = _configuration.ThumbnailMinimumSize;
