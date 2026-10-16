@@ -78,6 +78,15 @@ Own NSWindow pointers are always above the 32-bit range on arm64; `User32NativeM
 - `MirrorWindow` is nonactivating (`WindowsPreviewWindowAdapter`) and draws the stream with `eom_thumbnail_set_source_rect`. Left drag moves, edge drag resizes with the source aspect ratio, click activates the client, right-click opens the themed menu. Geometry is saved when a gesture ends.
 - `MirrorModule` registers the **UI Mirrors** workspace page; the menu bar has **New UI mirror...**.
 
+### Local alerts
+
+The shared [Local alerts](local-alerts.md) feature runs on [MacAlertPlatform](../../Eve-O-Preview.Mac/Alerts/MacAlertPlatform.cs), registered in `MacProgram` and started after the mirrors; `WorkspaceWindow` sets `Backend.AlertHost`, adds the page and the menu-bar items **Local alerts...** and **Pause alerts** / **Resume alerts**.
+
+- Capture: [Alerts.swift](../../Eve-O-Preview.Mac.Native/Sources/EveOMacNative/Alerts.swift) `RegionSampler` streams the watch's `Capture` area (`sourceRect`, points relative to the window's top-left corner) at the screen's backing scale, 4 fps, BGRA, and keeps the newest frame. `eom_sampler_read` copies it only when its sequence changed; `MacAlertSampler` copies into a fresh buffer each time because earlier frames may still be in use (Discord image, diagnostic view). A hidden application (`NSRunningApplication.isHidden`) or minimized window (AX) reads as stale.
+- Count: `eom_recognize_text` uses Vision (`.accurate`, no language correction). The crop is enlarged, padded with its own background colour and preceded by the word "Count": Vision misreads glyphs touching the image edge and skips a lone digit. The word contains no digit, so count parsing ignores it.
+- Sound: `eom_play_sound` plays WAV data through `NSSound` with its volume on the main thread.
+- Selection: `RegionSelector` (shared with UI mirrors) takes a prompt, a minimum size and a dashed reference outline; the member list is drawn first, then the count over the same still (Esc skips the count).
+
 ### macOS settings
 
 Stored in `EVE-O Preview.macos.json` beside the global settings file and bound through `WindowsWorkspaceBackend.BuildPlatformSettings`:
@@ -120,15 +129,15 @@ The bundle is signed with `CodesignIdentity` (default `EVE-O Preview Dev`); pass
 
 ### Test harness and mock client
 
-`--debug-harness` enables [DebugHarness](../../Eve-O-Preview.Mac/Mac/DebugHarness.cs): each line written to `~/Library/Application Support/EVE-O Preview/debug/command.txt` runs on the UI thread (`state`, `snapshot`, `click`, `minimize`, `move`, `mouse`, `key`, `cmd`, `setting`, `combatlogs`, `navigate`, `windows`, `activate-check`, `mirror-create`, `mirror-command`). Screenshots use the app's own Screen Recording grant; key and mouse events use its Accessibility grant and travel through the real event taps. Never enable it in normal launches.
+`--debug-harness` enables [DebugHarness](../../Eve-O-Preview.Mac/Mac/DebugHarness.cs): each line written to `~/Library/Application Support/EVE-O Preview/debug/command.txt` runs on the UI thread (`state`, `snapshot`, `click`, `minimize`, `move`, `mouse`, `key`, `cmd`, `setting`, `combatlogs`, `navigate`, `windows`, `activate-check`, `mirror-create`, `mirror-command`, and `alert-add TITLE|X,Y,W,H[|X,Y,W,H]`, `alert-state`, `alert-option`, `alert-watch`, `alert-view`, `alert-ack` for Local alerts). The settings folder follows `$HOME`, so `open -n "EVE-O Preview.app" --env HOME=<scratch folder> --args --debug-harness` runs against a throwaway profile. Screenshots use the app's own Screen Recording grant; key and mouse events use its Accessibility grant and travel through the real event taps. Never enable it in normal launches.
 
-[Eve-O-Mock.Mac](../../tests/Eve-O-Mock.Mac/README.md) builds an `ExeFile` executable that opens an `EVE - <Name>` window with animated content, optional sound and optional Gamelog output.
+[Eve-O-Mock.Mac](../../tests/Eve-O-Mock.Mac/README.md) builds an `ExeFile` executable that opens an `EVE - <Name>` window with animated content, optional sound, optional Gamelog output and an optional Local member list (`--local FILE`: standing icons in the measured client colours and a `Local [N]` header, re-read every second).
 
 ### Validated with the mock client (macOS 26, Apple Silicon)
 
-Discovery and renames; live previews with overlays and correct stretching; click-to-switch from an inactive host without activating it (window frontmost within one 25 ms poll); Command-click hide and click restore; context menu without focus change; Move mode, hover zoom, persisted layouts; regions; login-screen client; other applications; cycle-group hotkey capture (`Ctrl+F1` from Command-F1) and cycling; background policy (background client threads at priority 4, active client unchanged); background mute tap creation; live Gamelog ingestion and DPS/alpha augments; settings pages; menu-bar item; reopen to show settings; UI mirror creation, reselection, zoom, move/resize and persistence; Windows host and tests still compile.
+Discovery and renames; live previews with overlays and correct stretching; click-to-switch from an inactive host without activating it (window frontmost within one 25 ms poll); Command-click hide and click restore; context menu without focus change; Move mode, hover zoom, persisted layouts; regions; login-screen client; other applications; cycle-group hotkey capture (`Ctrl+F1` from Command-F1) and cycling; background policy (background client threads at priority 4, active client unchanged); background mute tap creation; live Gamelog ingestion and DPS/alpha augments; settings pages; menu-bar item; reopen to show settings; UI mirror creation, reselection, zoom, move/resize and persistence; Local alerts on a covered client: all eight standing colours classified, the count read (single and double digits, tight boxes), hostile and unidentified arrivals, all-clear, pause while hidden with the preview note, resume, global pause; Windows host and tests still compile.
 
-Still unverified: the real EVE client's process/bundle names, window titles, log folder, title-bar height and audio behavior; whether the mute tap is audibly silent on every output device; mixed-DPI multi-monitor layouts; Developer ID signing.
+Still unverified: Local alert detection on real clients (icon colours and sizes at each UI scale, colour-blind mode, translucent windows), the interactive area selection for alerts, Discord delivery; the real EVE client's process/bundle names, window titles, log folder, title-bar height and audio behavior; whether the mute tap is audibly silent on every output device; mixed-DPI multi-monitor layouts; Developer ID signing.
 
 ## Known limitations
 

@@ -12,6 +12,7 @@ src/tests/Eve-O-Mock.Mac/.build/release/ExeFile --name "Pilot One" --x 80 --y 80
 | `--name NAME` | Window title `EVE - NAME` (default `Pilot One`). |
 | `--login` | Window title `EVE` (login screen). |
 | `--sound` | Plays a short system sound every second (background-mute checks). |
+| `--local FILE` | Shows a Local member list (header `Local [N]`, one row per pilot with a standing icon) at the top right, 20 points from the right edge and 40 points below the title bar. FILE is re-read every second: one `STANDING Name` per line (`red`, `orange`, `yellow`, `neutral`, `green`, `blue`, `lightblue`, `purple`, `none`); an optional `count N` line overrides the member count (default: rows + 1). |
 | `--gamelog` | Writes combat lines in EVE's Gamelog format to `~/Documents/EVE/logs/Gamelogs` every two seconds. |
 | `--x`, `--y`, `--width`, `--height` | Initial window frame in points. |
 

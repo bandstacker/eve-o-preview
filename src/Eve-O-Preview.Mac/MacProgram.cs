@@ -70,6 +70,7 @@ static class MacProgram
         container.Resolve<MainFormPresenter>();
         var workspace = container.Resolve<WorkspaceWindow>();
         container.Resolve<EveOPreview.Mac.Mirrors.MirrorManager>().Start();
+        container.Resolve<EveOPreview.Alerts.AlertManager>().Start();
         lifetime.MainWindow = workspace;
         workspace.Opened += (_, _) => RequestMissingPermissions(workspace);
         // Opening the app again (Finder, Spotlight, Launchpad) shows settings, as the menu-bar item
@@ -78,7 +79,7 @@ static class MacProgram
             activatable.Activated += (_, e) => { if (e.Kind == ActivationKind.Reopen) workspace.RestoreWorkspace(); };
         if (args.Contains("--debug-harness"))
             _ = new DebugHarness(container.Resolve<IThumbnailManager>(), container.Resolve<IProcessMonitor>(), workspace,
-                container.Resolve<EveOPreview.Mac.Mirrors.MirrorManager>(), Log.Logger);
+                container.Resolve<EveOPreview.Mac.Mirrors.MirrorManager>(), container.Resolve<EveOPreview.Alerts.AlertManager>(), Log.Logger);
         int exit = lifetime.Start(args);
         MacNative.AudioUnmuteAll();
         return exit;
@@ -176,6 +177,9 @@ static class MacProgram
         builder.RegisterType<EveOPreview.Mac.Mirrors.MirrorStore>().AsSelf().SingleInstance();
         builder.RegisterType<EveOPreview.Mac.Mirrors.MirrorManager>().AsSelf().SingleInstance();
         builder.RegisterType<EveOPreview.Mac.Mirrors.MirrorModule>().AsSelf().SingleInstance();
+        builder.RegisterType<EveOPreview.Mac.Alerts.MacAlertPlatform>().As<EveOPreview.Alerts.IAlertPlatform>().SingleInstance();
+        builder.RegisterType<EveOPreview.Alerts.AlertStore>().AsSelf().SingleInstance();
+        builder.RegisterType<EveOPreview.Alerts.AlertManager>().AsSelf().SingleInstance();
 
         MediatR.Mediator.LicenseKey = "Community";
         builder.Register(ctx => new AutofacServiceProvider(ctx.Resolve<ILifetimeScope>())).As<IServiceProvider>().InstancePerLifetimeScope();

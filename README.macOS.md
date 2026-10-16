@@ -56,6 +56,14 @@ A UI mirror shows one area of a client window, for example Local chat, in its ow
 
 The mirror then works like a preview: drag it to move, drag an edge or corner to resize (proportionally, so text stays sharp and undistorted), click it to switch to that client, and right-click for **Reselect area**, **Actual size**, opacity, update rate and **Remove**. Mirrors belong to the current profile, show while their client runs and hide together with the previews (**Hide all previews** and **Hide previews outside EVE**). The area is fixed relative to the client window, so reselect it after moving or resizing that window inside EVE.
 
+### Local alerts
+
+Local alerts work as described in the [main guide](README.md#local-alerts). On the Mac:
+
+- A watched client may be covered by other windows. A hidden client (⌘H, **Hide inactive clients**, **Hide all clients**) draws nothing, so its watch pauses and its preview shows "Watch paused" until the client is shown again.
+- The member count is read by macOS's on-device text recognition; no extra permission beyond Screen Recording is needed.
+- The menu bar has **Local alerts...** and **Pause alerts** / **Resume alerts**.
+
 ### Bringing Windows profiles over
 
 Copy your Windows `EVE-O Preview` folder (or just its `Profiles` folder) to the Mac, open the **macOS** page, enter your Windows display size and choose **Choose folder...**. Profiles keep their cycle groups, colors and hotkeys; positions and sizes are scaled to your Mac's main display. Imported profiles never overwrite existing ones.

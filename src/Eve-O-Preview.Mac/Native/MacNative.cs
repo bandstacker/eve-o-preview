@@ -105,6 +105,35 @@ internal static unsafe partial class MacNative
     [LibraryImport(Library, EntryPoint = "eom_capture_window_png")]
     private static partial byte* CaptureWindowPng(uint windowId, int maxWidth, int maxHeight, int* length);
 
+    // Local alerts
+    [LibraryImport(Library, EntryPoint = "eom_sampler_create")]
+    public static partial long SamplerCreate(uint windowId, double x, double y, double width, double height);
+    [LibraryImport(Library, EntryPoint = "eom_sampler_read")]
+    public static partial int SamplerRead(long id, byte* target, int capacity, long known, int* width, int* height, int* stride, long* sequence, double* scale);
+    [LibraryImport(Library, EntryPoint = "eom_sampler_destroy")]
+    public static partial void SamplerDestroy(long id);
+    [LibraryImport(Library, EntryPoint = "eom_recognize_text")]
+    private static partial byte* RecognizeTextUtf8(byte* pixels, int width, int height, int stride);
+    [LibraryImport(Library, EntryPoint = "eom_play_sound")]
+    private static partial void PlaySound(byte* data, int length, double volume);
+
+    public static string RecognizeText(byte[] pixels, int width, int height, int stride)
+    {
+        fixed (byte* data = pixels)
+        {
+            byte* text = RecognizeTextUtf8(data, width, height, stride);
+            if (text == null) return null;
+            try { return System.Text.Encoding.UTF8.GetString(text, NullTerminatedLength(text)); }
+            finally { Free(text); }
+        }
+    }
+
+    public static void PlaySound(byte[] data, double volume)
+    {
+        if (data is not { Length: > 0 }) return;
+        fixed (byte* bytes = data) PlaySound(bytes, data.Length, volume);
+    }
+
     // Input
     [LibraryImport(Library, EntryPoint = "eom_key_tap_start")]
     public static partial int KeyTapStart(delegate* unmanaged<int, ushort, ulong, int, int> callback);

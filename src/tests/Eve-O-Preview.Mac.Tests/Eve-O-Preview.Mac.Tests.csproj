@@ -22,5 +22,6 @@
     <Compile Include="../Eve-O-Preview.Tests/Infrastructure/Stub.cs" Link="Shared/Stub.cs" />
     <Compile Include="../Eve-O-Preview.Tests/Checks/UsePreviewForAllTests.cs" Link="Shared/UsePreviewForAllTests.cs" />
     <Compile Include="../Eve-O-Preview.Tests/Checks/CycleFocusTests.cs" Link="Shared/CycleFocusTests.cs" />
+    <Compile Include="../Eve-O-Preview.Tests/Checks/AlertTests.cs" Link="Shared/AlertTests.cs" />
   </ItemGroup>
 </Project>

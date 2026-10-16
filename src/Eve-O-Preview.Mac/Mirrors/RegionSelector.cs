@@ -13,7 +13,7 @@ using EveOPreview.Mac.Native;
 namespace EveOPreview.Mac.Mirrors;
 
 /// <summary>
-/// Covers one client window with a still image of it and lets the user drag the area to mirror.
+/// Covers one client window with a still image of it and lets the user drag an area (UI mirrors, Local alerts).
 /// Selecting on a still keeps previews and other floating windows from hiding the game's UI.
 /// The result is in points relative to the client window's top-left corner; null when cancelled.
 /// </summary>
@@ -25,9 +25,13 @@ internal sealed class RegionSelector : Window
     private readonly Border _dim = new() { Background = new SolidColorBrush(Color.Parse("#66000000")) };
     private Point? _start;
 
-    private RegionSelector((double X, double Y, double Width, double Height) bounds, byte[] still, Rect? initial)
+    private readonly double _minimumWidth, _minimumHeight;
+
+    private RegionSelector((double X, double Y, double Width, double Height) bounds, byte[] still, Rect? initial, string prompt,
+        Size minimum, Rect? reference)
     {
-        Title = "Select the area to mirror";
+        _minimumWidth = minimum.Width; _minimumHeight = minimum.Height;
+        Title = "Select an area";
         SystemDecorations = SystemDecorations.None;
         ShowInTaskbar = false; Topmost = true; CanResize = false;
         WindowStartupLocation = WindowStartupLocation.Manual;
@@ -39,11 +43,19 @@ internal sealed class RegionSelector : Window
             _canvas.Children.Add(new Image { Source = new Bitmap(new MemoryStream(still)), Width = bounds.Width, Height = bounds.Height, Stretch = Stretch.Fill });
         _dim.Width = bounds.Width; _dim.Height = bounds.Height;
         _canvas.Children.Add(_dim);
+        if (reference is { } shown)
+        {
+            // An earlier selection of the same flow, for orientation.
+            var outline = new Rectangle { Stroke = new SolidColorBrush(Color.Parse("#B035D06B")), StrokeThickness = 2, StrokeDashArray = [4, 3],
+                Width = shown.Width, Height = shown.Height };
+            Canvas.SetLeft(outline, shown.X); Canvas.SetTop(outline, shown.Y);
+            _canvas.Children.Add(outline);
+        }
         _canvas.Children.Add(_selection);
         var hint = new Border
         {
             Background = new SolidColorBrush(Color.Parse("#E0101825")), CornerRadius = new CornerRadius(6), Padding = new Thickness(12, 8),
-            Child = new TextBlock { Text = "Drag over the area to mirror. Release to create the mirror, Esc to cancel.", Foreground = Brushes.White, FontSize = 13 },
+            Child = new TextBlock { Text = prompt, Foreground = Brushes.White, FontSize = 13, TextWrapping = TextWrapping.Wrap, MaxWidth = Math.Max(240, bounds.Width - 64) },
         };
         Canvas.SetLeft(hint, 16); Canvas.SetTop(hint, Math.Min(48, bounds.Height / 4));
         _canvas.Children.Add(hint);
@@ -63,7 +75,7 @@ internal sealed class RegionSelector : Window
             _start = null;
             e.Pointer.Capture(null);
             var rect = new Rect(start, e.GetPosition(this)).Normalize().Intersect(new Rect(0, 0, bounds.Width, bounds.Height));
-            if (rect.Width >= 16 && rect.Height >= 12) Complete(rect);
+            if (rect.Width >= _minimumWidth && rect.Height >= _minimumHeight) Complete(rect);
             else _selection.IsVisible = false;
         };
         KeyDown += (_, e) => { if (e.Key == Key.Escape) Complete(null); };
@@ -84,9 +96,12 @@ internal sealed class RegionSelector : Window
         Close();
     }
 
-    public static Task<Rect?> SelectAsync((double X, double Y, double Width, double Height) bounds, byte[] still, Rect? initial = null)
+    public const string MirrorPrompt = "Drag over the area to mirror. Release to create the mirror, Esc to cancel.";
+
+    public static Task<Rect?> SelectAsync((double X, double Y, double Width, double Height) bounds, byte[] still, Rect? initial = null,
+        string prompt = MirrorPrompt, Size? minimum = null, Rect? reference = null)
     {
-        var selector = new RegionSelector(bounds, still, initial);
+        var selector = new RegionSelector(bounds, still, initial, prompt, minimum ?? new Size(16, 12), reference);
         selector.Show();
         MacNative.ActivateSelf();
         selector.Activate();

@@ -3,6 +3,7 @@ using System.IO;
 using System.Linq;
 using System.Text;
 using Avalonia.Threading;
+using EveOPreview.Alerts;
 using EveOPreview.Mac.Native;
 using EveOPreview.Services;
 using EveOPreview.Services.Implementation;
@@ -16,6 +17,7 @@ namespace EveOPreview.Mac;
 /// Developer-only test hook, enabled with --debug-harness. Each line written to
 /// &lt;settings folder&gt;/debug/command.txt is executed on the UI thread and the file is removed:
 ///   snapshot NAME | state NAME | click TITLE | minimize TITLE | setting KEY VALUE | open-settings | hide-settings
+///   alert-add TITLE|X,Y,W,H[|X,Y,W,H] | alert-state | alert-option KEY VALUE | alert-watch INDEX ACTION [VALUE] | alert-view INDEX | alert-ack
 /// Output files are written to the same folder. Never enabled in normal launches.
 /// </summary>
 internal sealed class DebugHarness
@@ -27,11 +29,12 @@ internal sealed class DebugHarness
     private readonly ILogger _logger;
     private readonly DispatcherTimer _timer;
     private readonly Mirrors.MirrorManager _mirrors;
+    private readonly AlertManager _alerts;
 
     public DebugHarness(IThumbnailManager thumbnails, IProcessMonitor processes, WorkspaceWindow workspace,
-        Mirrors.MirrorManager mirrors, ILogger logger)
+        Mirrors.MirrorManager mirrors, AlertManager alerts, ILogger logger)
     {
-        _thumbnails = thumbnails; _processes = processes; _workspace = workspace; _mirrors = mirrors; _logger = logger;
+        _thumbnails = thumbnails; _processes = processes; _workspace = workspace; _mirrors = mirrors; _alerts = alerts; _logger = logger;
         Directory.CreateDirectory(_folder);
         _timer = new DispatcherTimer { Interval = TimeSpan.FromMilliseconds(300) };
         _timer.Tick += (_, _) => Poll();
@@ -144,6 +147,39 @@ internal sealed class DebugHarness
                 var mc = argument.Split(' ', 2);
                 if (int.TryParse(mc[0], out int mi) && mi < _mirrors.Mirrors.Count) _ = _mirrors.Execute(_mirrors.Mirrors[mi].Id, mc[1]);
                 break;
+            case "alert-add":
+                // alert-add EVE - Pilot|x,y,w,h[|x,y,w,h]: a watch without the selection UI.
+                var alertParts = argument.Split('|');
+                static AlertArea Area(string text)
+                {
+                    var n = text.Split(',').Select(v => double.Parse(v, System.Globalization.CultureInfo.InvariantCulture)).ToArray();
+                    return new AlertArea(n[0], n[1], n[2], n[3]);
+                }
+                _logger.Information("Debug alert-add: {Result}", _alerts.AddWatch(alertParts[0], Area(alertParts[1]), alertParts.Length > 2 ? Area(alertParts[2]) : null).Message);
+                break;
+            case "alert-state":
+                var alerts = _alerts.Snapshot();
+                var lines = new StringBuilder($"paused={alerts.Options.Paused} scans={alerts.Options.ScansPerSecond} webhook='{alerts.Options.WebhookStatus}'\n");
+                foreach (var watch in alerts.Watches)
+                    lines.AppendLine($"watch '{watch.Name}' {watch.Status} hostile={watch.Hostile} friendly={watch.Friendly} count={watch.Count} unknown={watch.Unidentified} detail='{watch.Detail}' countText='{_alerts.ReadCountText(watch.Id).Replace("\n", "\\n")}'");
+                File.WriteAllText(Path.Combine(_folder, "alerts.txt"), lines.ToString());
+                break;
+            case "alert-option":
+                var option = argument.Split(' ', 2);
+                _logger.Information("Debug alert-option: {Result}", _alerts.EditOptions(option[0], option.Length > 1 ? option[1] : "").Message);
+                break;
+            case "alert-watch":
+                var wa = argument.Split(' ', 3);
+                if (int.TryParse(wa[0], out int wi) && wi < _alerts.Snapshot().Watches.Count)
+                    _alerts.EditWatchAsync(_alerts.Snapshot().Watches[wi].Id, wa[1], wa.Length > 2 ? wa[2] : "")
+                        .ContinueWith(t => _logger.Information("Debug alert-watch: {Result}", t.Result.Message));
+                break;
+            case "alert-view":
+                if (int.TryParse(argument, out int vi) && vi < _alerts.Snapshot().Watches.Count
+                    && _alerts.ReadView(_alerts.Snapshot().Watches[vi].Id) is { } view)
+                    File.WriteAllBytes(Path.Combine(_folder, "alert-view.png"), view);
+                break;
+            case "alert-ack": _alerts.AcknowledgeAll(); break;
             case "open-settings": _workspace.RestoreWorkspace(); break;
             case "navigate": _workspace.RestoreWorkspace(); _workspace.Workspace.Navigate(argument); break;
             case "hide-settings": _workspace.Hide(); break;

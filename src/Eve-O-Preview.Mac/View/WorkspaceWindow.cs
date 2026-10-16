@@ -42,18 +42,20 @@ public sealed class WorkspaceWindow : Window, IMainFormView, IAsyncSettingsView,
         ApplicationPreferences preferences, IWorkspacePortraitProvider portraits, Services.IProcessMonitor processes,
         Mac.MacModule macModule, Mac.Mirrors.MirrorModule mirrorModule, IWorkspacePreviewCapture previewCapture = null,
         CharacterIdentityCache characters = null, Services.IThumbnailManager thumbnails = null,
-        IWorkspaceCombatLogs combatLogs = null, IWorkspaceStaticData staticData = null)
+        IWorkspaceCombatLogs combatLogs = null, IWorkspaceStaticData staticData = null, Alerts.AlertManager alerts = null)
     {
         _preferences = preferences;
         _processes = processes as MacProcessMonitor;
         Title = "EVE-O Preview";
         WindowStartupLocation = WindowStartupLocation.CenterScreen;
         Icon = LoadIcon();
-        Backend = new WindowsWorkspaceBackend(this, this, mediator, storage, configuration, profiles, preferences, logger, portraits, previewCapture, characters, thumbnails, combatLogs, staticData);
+        Backend = new WindowsWorkspaceBackend(this, this, mediator, storage, configuration, profiles, preferences, logger, portraits, previewCapture, characters, thumbnails, combatLogs, staticData)
+        { AlertHost = alerts };
         var modules = new List<WorkspaceModule>();
         if (combatLogs is not null) modules.Add(CombatLogView.CreateModule());
         modules.Add(RegionsView.CreateModule());
         modules.Add(mirrorModule.Create());
+        if (alerts is not null) modules.Add(AlertsView.CreateModule());
         modules.Add(macModule.Create());
         _workspace = new WorkspaceView(Backend, modules);
         Content = _workspace;
@@ -62,6 +64,14 @@ public sealed class WorkspaceWindow : Window, IMainFormView, IAsyncSettingsView,
         AddMenu(menu, "Hide / show previews", () => ToggleHideAllActiveClients?.Invoke());
         AddMenu(menu, "Hide all clients", () => MinimizeAllClients?.Invoke());
         AddMenu(menu, "New UI mirror...", () => { RestoreWorkspace(); _workspace.Navigate(Mac.Mirrors.MirrorModule.Id); });
+        if (alerts is not null)
+        {
+            AddMenu(menu, "Local alerts...", () => { RestoreWorkspace(); _workspace.Navigate(AlertsView.ModuleId); });
+            var pause = new NativeMenuItem(alerts.IsPaused ? "Resume alerts" : "Pause alerts");
+            pause.Click += (_, _) => alerts.TogglePaused();
+            alerts.Changed += () => pause.Header = alerts.IsPaused ? "Resume alerts" : "Pause alerts";
+            menu.Items.Add(pause);
+        }
         menu.Items.Add(new NativeMenuItemSeparator());
         AddMenu(menu, "Quit EVE-O Preview", () => ApplicationExitRequested?.Invoke());
         _tray = new TrayIcon { Icon = Icon, ToolTipText = "EVE-O Preview", Menu = menu, IsVisible = true };
