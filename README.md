@@ -128,7 +128,7 @@ Turn off edit mode when finished. Leaving the Regions page, hiding the workspace
 
 A UI mirror shows one area of a client, for example Local chat, in its own always-on-top window. Open **UI Mirrors** in Light or Dark (or choose **New UI mirror...** from the tray icon), pick a character and choose **Select area...**. EVE-O brings that client to the front and shows a still of it: drag a box over the area and release. Escape or a right-click cancels.
 
-The mirror then behaves like a preview: drag it to move, drag an edge or corner to resize it proportionally, click it to switch to that client, and right-click it for **Reselect area**, **Actual size**, opacity and **Remove**. Rename mirrors and set their size on the UI Mirrors page. Mirrors belong to the current profile, show while their client runs and hide with **Hide all previews**. The area is fixed relative to the client window: choose **Reselect area** after moving or resizing that window inside EVE or changing EVE's UI scale.
+The mirror then behaves like a preview: drag it to move, drag an edge or corner to resize it proportionally, click it to switch to that client, and right-click it for **Reselect area**, **Actual size**, opacity and **Remove**. Rename mirrors and set their size on the UI Mirrors page. Mirrors belong to the current profile, show while their client runs and hide together with the previews (**Hide all previews** and **Hide previews outside EVE**). The area is fixed relative to the client window: choose **Reselect area** after moving or resizing that window inside EVE or changing EVE's UI scale.
 
 ### Preview other applications
 

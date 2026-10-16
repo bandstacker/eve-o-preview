@@ -47,7 +47,7 @@ public sealed class MirrorsView : UserControl, IWorkspaceLiveModule, IDisposable
             Row(Label("Client"), _client, Button("Select area...", "mirror-create", CreateAsync)),
             _message));
         root.Children.Add(Card("Your mirrors",
-            Muted("Mirrors belong to the current profile and show while their client runs. Hide all previews hides them too."),
+            Muted("Mirrors belong to the current profile and show while their client runs. They hide together with the previews."),
             _list));
         Content = root;
         _mirrors.MirrorsChanged += OnMirrorsChanged;
