@@ -118,7 +118,7 @@ The profile's `CycleSkipIndicatorStyle` and `CycleSkipIndicatorColor` customize 
 
 ### Future platform and integration boundary
 
-A future Linux host can implement the workspace backend contract and reuse the UI. It still needs discovery, activation, capture, hotkey, tray, affinity and native-feature implementations or explicit capability gaps. The current host, its `net10.0-windows` target, DWM and Robin remain Windows-specific. Do not describe the app as supporting Linux because the UI library builds without Windows types.
+A future Linux host can implement the workspace backend contract and reuse the UI. It still needs discovery, activation, capture, hotkey, tray, affinity and native-feature implementations or explicit capability gaps. The current host, its `net10.0-windows10.0.19041.0` target, DWM and Robin remain Windows-specific. Do not describe the app as supporting Linux because the UI library builds without Windows types.
 
 Characters/ESI remains hidden. `WorkspaceModules.ReservedIds` retains `Characters` and `Dps`; the Windows host registers the implemented `Dps` module as **Augments** through `CombatLogView.CreateModule`. Without a registered module, reserved navigation returns to Overview (General in Legacy). Legacy rejects both modules. See [combat logs](combat-logs.md) for automatic/manual folder selection, ingestion/storage, shared and per-client settings, alpha/DPS/repair/location graphics, incoming-name flashes and simulation through the production event path with temporary statistics.
 

@@ -9,7 +9,7 @@ artifact paths, performance limits and outstanding acceptance gates.
 | Entry point | Current role |
 | --- | --- |
 | [Source solution](../../EVE-O-Preview.sln) | Application, Robin, Mock, tests and release tooling. Open this solution for Test Explorer. Its Build configuration selects release tooling plus Debug Robin/tests; it is not an ordinary Release build. |
-| [Application](../../Eve-O-Preview/Eve-O-Preview.csproj) | net10.0-windows, Avalonia desktop lifetime and all shipping windows. Windows adapters retain DWM, DirectComposition and global input. Debug is x64; publishing uses win-x64. No Forms/WPF runtime or Robin project reference. |
+| [Application](../../Eve-O-Preview/Eve-O-Preview.csproj) | net10.0-windows10.0.19041.0 (the Windows Runtime projection supplies text recognition for Local alerts; projects referencing the application use the same target), Avalonia desktop lifetime and all shipping windows. Windows adapters retain DWM, DirectComposition and global input. Debug is x64; publishing uses win-x64. No Forms/WPF runtime or Robin project reference. |
 | [Portable UI](../../Eve-O-Preview.UI/Eve-O-Preview.UI.csproj) | net10.0 Avalonia workspace and palettes, with no process/HWND contract. |
 | [Preview contracts](../../Eve-O-Preview.Preview/Eve-O-Preview.Preview.csproj) | Toolkit-independent image/scene contracts and physical-pixel snap session. |
 | [UI smoke](../../tests/Eve-O-Preview.UI.Smoke/Eve-O-Preview.UI.Smoke.csproj) | Headless/Skia workspace renders using a controlled backend. |

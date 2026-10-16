@@ -101,6 +101,7 @@ namespace EveOPreview
                 container.Resolve<MainFormPresenter>();
                 lifetime.MainWindow = container.Resolve<WorkspaceWindow>();
                 container.Resolve<EveOPreview.Mirrors.MirrorManager>().Start();
+                container.Resolve<EveOPreview.Alerts.AlertManager>().Start();
                 
                 DebuggerSidecar.LaunchTheSideCar();
 
@@ -255,6 +256,9 @@ namespace EveOPreview
             builder.RegisterType<WindowsWorkspacePreviewCapture>().As<IWorkspacePreviewCapture>().SingleInstance();
             builder.RegisterType<EveOPreview.Mirrors.MirrorStore>().AsSelf().SingleInstance();
             builder.RegisterType<EveOPreview.Mirrors.MirrorManager>().AsSelf().SingleInstance();
+            builder.RegisterType<EveOPreview.Alerts.WindowsAlertPlatform>().As<EveOPreview.Alerts.IAlertPlatform>().SingleInstance();
+            builder.RegisterType<EveOPreview.Alerts.AlertStore>().AsSelf().SingleInstance();
+            builder.RegisterType<EveOPreview.Alerts.AlertManager>().AsSelf().SingleInstance();
 
 
             // Application services

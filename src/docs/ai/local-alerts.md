@@ -39,6 +39,15 @@ Green (corp), blue (alliance, +5, +10) and purple (fleet) are friendly. Every ot
 
 `IAlertPlatform` ([IAlertPlatform.cs](../../Eve-O-Preview/Alerts/IAlertPlatform.cs)) is the host seam: samplers (live, stale or unavailable frames), text recognition, sound playback and the two-step area selection on a still of the client. A host without an implementation does not register `AlertManager`; `AlertShortcutHandler` then ignores alert shortcuts.
 
+## Windows host
+
+[WindowsAlertPlatform.cs](../../Eve-O-Preview/Alerts/Windows/WindowsAlertPlatform.cs) is registered in `Program` and started after the mirrors; `WorkspaceWindow` sets `AlertHost`, adds the page and the tray items **Local alerts...** and **Pause alerts** / **Resume alerts**.
+
+- Capture: `WindowsAlertSampler` calls `IWindowManager.GetStaticThumbnail` (PrintWindow of the client area with `PW_RENDERFULLCONTENT`, also while covered) on every read and crops the watch's `Capture` area in client pixels. A minimized client (`IsIconic`) reads as stale. Each read renders the whole client area, so the scan rate bounds the cost.
+- Count: `Windows.Media.Ocr` (user-profile languages, else en-US) on the crop enlarged, padded with its own background and preceded by the word "Count", for the same reasons as on macOS. Without an OCR language the page offers no count box. This needs the `net10.0-windows10.0.19041.0` target, which adds the Windows Runtime projection to the build.
+- Sound: `PlaySound` from an unmanaged copy of the WAV (16-bit PCM scaled to the volume), kept until the next sound stops it.
+- Selection: `MirrorRegionSelector` (shared with UI mirrors) takes a prompt, a minimum size and a dashed reference outline; the member list is drawn first, then the count on the same still.
+
 ## UI and shortcuts
 
 [AlertsView.cs](../../Eve-O-Preview.UI/AlertsView.cs) is the portable **Local alerts** page (Light/Dark): new watch, the watch list with live status and the "what EVE-O sees" view (count area above the member list, detected icons outlined: red alarms, green ignored), alarm options and Discord. It talks to `IWorkspaceAlerts` ([AlertContract.cs](../../Eve-O-Preview.UI/AlertContract.cs)), implemented by [WindowsWorkspaceBackend.Alerts.cs](../../Eve-O-Preview/View/Implementation/WindowsWorkspaceBackend.Alerts.cs) when the host sets `AlertHost`.
@@ -47,4 +56,4 @@ Profiles store two global shortcuts, `AcknowledgeAlertsHotkey` and `ToggleAlerts
 
 ## Validation
 
-[AlertTests.cs](../../tests/Eve-O-Preview.Tests/Checks/AlertTests.cs) covers icon detection at 1x and 2x, rejection of panels, scroll bars and a captured text glyph, captured fills crossing a shade boundary, every alarm rule, count parsing, PNG and WAV output, Discord payloads, storage and crop scaling. The UI smoke run renders and drives the page. Detection was tuned on mock clients drawing icons in the measured client colours; confirm on real clients (UI scales, colour-blind settings and window transparency) before relying on it.
+[AlertTests.cs](../../tests/Eve-O-Preview.Tests/Checks/AlertTests.cs) covers icon detection at 1x and 2x, rejection of panels, scroll bars and a captured text glyph, captured fills crossing a shade boundary, every alarm rule, count parsing, PNG and WAV output, Discord payloads, storage and crop scaling. The UI smoke run renders and drives the page. Detection was tuned on mock clients drawing icons in the measured client colours; confirm on real clients (UI scales, colour-blind settings and window transparency) before relying on it. The Windows host compiles but has not run on Windows: capture cost, OCR results and sound playback there are unverified.

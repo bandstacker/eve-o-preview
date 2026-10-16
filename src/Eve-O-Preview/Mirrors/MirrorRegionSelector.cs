@@ -11,7 +11,7 @@ using Avalonia.Media.Imaging;
 namespace EveOPreview.Mirrors;
 
 /// <summary>
-/// Covers a client area with a still image of it and lets the user drag the area to mirror. Selecting
+/// Covers a client area with a still image of it and lets the user drag an area (UI mirrors, Local alerts). Selecting
 /// on a still keeps previews and other topmost windows from hiding the game's UI. The result is in
 /// preview pixels relative to the client area's top-left corner; null when cancelled (Esc or right-click).
 /// </summary>
@@ -29,10 +29,13 @@ internal sealed class MirrorRegionSelector : Window
     };
     private Point? _start;
 
-    private MirrorRegionSelector(System.Drawing.Rectangle bounds, byte[] still, System.Drawing.Rectangle? initial)
+    public const string MirrorPrompt = "Drag over the area to mirror. Release to create the mirror; Esc or right-click cancels.";
+
+    private MirrorRegionSelector(System.Drawing.Rectangle bounds, byte[] still, System.Drawing.Rectangle? initial, string prompt,
+        System.Drawing.Size minimum, System.Drawing.Rectangle? reference)
     {
         _bounds = bounds;
-        Title = "Select the area to mirror";
+        Title = "Select an area";
         SystemDecorations = SystemDecorations.None;
         ShowInTaskbar = false; Topmost = true; CanResize = false;
         WindowStartupLocation = WindowStartupLocation.Manual;
@@ -46,7 +49,7 @@ internal sealed class MirrorRegionSelector : Window
         var hint = new Border
         {
             Background = new SolidColorBrush(Color.Parse("#E0101825")), CornerRadius = new CornerRadius(6), Padding = new Thickness(12, 8),
-            Child = new TextBlock { Text = "Drag over the area to mirror. Release to create the mirror; Esc or right-click cancels.", Foreground = Brushes.White, FontSize = 13 },
+            Child = new TextBlock { Text = prompt, Foreground = Brushes.White, FontSize = 13, TextWrapping = TextWrapping.Wrap, MaxWidth = 640 },
         };
         Canvas.SetLeft(hint, 16); Canvas.SetTop(hint, 16);
         _canvas.Children.Add(hint);
@@ -58,6 +61,14 @@ internal sealed class MirrorRegionSelector : Window
             Width = bounds.Width / scale; Height = bounds.Height / scale;
             foreach (var layer in new Control[] { _still, _dim }) { layer.Width = Width; layer.Height = Height; }
             if (initial is { } rect) ShowSelection(new Rect(rect.X / scale, rect.Y / scale, rect.Width / scale, rect.Height / scale));
+            if (reference is { } shown)
+            {
+                // An earlier selection of the same flow, for orientation.
+                var outline = new Rectangle { Stroke = new SolidColorBrush(Color.Parse("#B035D06B")), StrokeThickness = 2, StrokeDashArray = [4, 3],
+                    Width = shown.Width / scale, Height = shown.Height / scale };
+                Canvas.SetLeft(outline, shown.X / scale); Canvas.SetTop(outline, shown.Y / scale);
+                _canvas.Children.Insert(_canvas.Children.IndexOf(_selection), outline);
+            }
         };
         PointerPressed += (_, e) =>
         {
@@ -78,7 +89,7 @@ internal sealed class MirrorRegionSelector : Window
             var rect = new Rect(start, e.GetPosition(this)).Normalize().Intersect(new Rect(0, 0, Width, Height));
             var pixels = new System.Drawing.Rectangle((int)Math.Round(rect.X * scale), (int)Math.Round(rect.Y * scale),
                 (int)Math.Round(rect.Width * scale), (int)Math.Round(rect.Height * scale));
-            if (pixels.Width >= 16 && pixels.Height >= 12) Complete(pixels);
+            if (pixels.Width >= minimum.Width && pixels.Height >= minimum.Height) Complete(pixels);
             else _selection.IsVisible = false;
         };
         KeyDown += (_, e) => { if (e.Key == Key.Escape) Complete(null); };
@@ -98,9 +109,10 @@ internal sealed class MirrorRegionSelector : Window
         Close();
     }
 
-    public static Task<System.Drawing.Rectangle?> SelectAsync(System.Drawing.Rectangle bounds, byte[] still, System.Drawing.Rectangle? initial = null)
+    public static Task<System.Drawing.Rectangle?> SelectAsync(System.Drawing.Rectangle bounds, byte[] still, System.Drawing.Rectangle? initial = null,
+        string prompt = MirrorPrompt, System.Drawing.Size? minimum = null, System.Drawing.Rectangle? reference = null)
     {
-        var selector = new MirrorRegionSelector(bounds, still, initial);
+        var selector = new MirrorRegionSelector(bounds, still, initial, prompt, minimum ?? new System.Drawing.Size(16, 12), reference);
         selector.Show();
         selector.Activate();
         return selector._result.Task;
