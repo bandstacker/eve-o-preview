@@ -144,6 +144,8 @@ public sealed class MirrorManager : IDisposable
             if (!MacNative.TryGetWindowBounds(windowId, out var bounds)) return "The client window is not available.";
             var still = await Task.Run(() => MacNative.CaptureWindow(windowId, (int)(bounds.Width * 2), (int)(bounds.Height * 2)));
             if (still == null) return "The client could not be captured. Check Screen Recording access on the macOS page.";
+            // The capture waits for a client that is still resizing; cover its final frame.
+            if (!MacNative.TryGetWindowBounds(windowId, out bounds)) return "The client window is not available.";
             Rect? initial = existing is null ? null : new Rect(existing.SourceX, existing.SourceY, existing.SourceWidth, existing.SourceHeight);
             var rect = await RegionSelector.SelectAsync(bounds, still, initial);
             if (rect is not { } area) return null;

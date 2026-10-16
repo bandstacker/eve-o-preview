@@ -17,7 +17,7 @@ namespace EveOPreview.Mac;
 /// Developer-only test hook, enabled with --debug-harness. Each line written to
 /// &lt;settings folder&gt;/debug/command.txt is executed on the UI thread and the file is removed:
 ///   snapshot NAME | state NAME | click TITLE | minimize TITLE | setting KEY VALUE | open-settings | hide-settings
-///   alert-add TITLE|X,Y,W,H[|X,Y,W,H] | alert-state | alert-option KEY VALUE | alert-watch INDEX ACTION [VALUE] | alert-view INDEX | alert-ack
+///   alert-add TITLE|X,Y,W,H[|X,Y,W,H] | alert-state | alert-option KEY VALUE | alert-watch INDEX ACTION [VALUE] | alert-view INDEX | alert-ack | still TITLE
 /// Output files are written to the same folder. Never enabled in normal launches.
 /// </summary>
 internal sealed class DebugHarness
@@ -180,6 +180,16 @@ internal sealed class DebugHarness
                     File.WriteAllBytes(Path.Combine(_folder, "alert-view.png"), view);
                 break;
             case "alert-ack": _alerts.AcknowledgeAll(); break;
+            case "still":
+                // still TITLE: the selection still of a client window (no activation), with its frame.
+                var stillClient = _processes.GetAllProcesses().FirstOrDefault(p => p.Title == argument);
+                if (stillClient == null) break;
+                uint stillWindow = (uint)stillClient.MainWindowHandle;
+                MacNative.TryGetWindowBounds(stillWindow, out var stillBounds);
+                var stillPng = MacNative.CaptureWindow(stillWindow, (int)(stillBounds.Width * 2), (int)(stillBounds.Height * 2));
+                if (stillPng != null) File.WriteAllBytes(Path.Combine(_folder, "still.png"), stillPng);
+                File.WriteAllText(Path.Combine(_folder, "still.txt"), $"bounds={stillBounds} png={stillPng?.Length ?? 0}");
+                break;
             case "open-settings": _workspace.RestoreWorkspace(); break;
             case "navigate": _workspace.RestoreWorkspace(); _workspace.Workspace.Navigate(argument); break;
             case "hide-settings": _workspace.Hide(); break;

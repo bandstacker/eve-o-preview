@@ -19,6 +19,8 @@ final class RegionSampler: NSObject, SCStreamOutput, SCStreamDelegate {
     private var width = 0, height = 0, stride = 0
     private var sequence: Int64 = 0
     private(set) var scale: Double = 2
+    private var areaWidth: Double = 0
+    private var loggedGeometry = false
     private var starting = false
     private(set) var failed = false
 
@@ -59,7 +61,7 @@ final class RegionSampler: NSObject, SCStreamOutput, SCStreamDelegate {
                 config.showsCursor = false
                 config.scalesToFit = true
                 config.capturesAudio = false
-                self.lock.withLock { self.scale = scale }
+                self.lock.withLock { self.scale = scale; self.areaWidth = clipped.width }
                 let stream = SCStream(filter: SCContentFilter(desktopIndependentWindow: window), configuration: config, delegate: self)
                 try stream.addStreamOutput(self, type: .screen, sampleHandlerQueue: self.queue)
                 try await stream.startCapture()
@@ -90,14 +92,18 @@ final class RegionSampler: NSObject, SCStreamOutput, SCStreamDelegate {
               let statusValue = attachments.first?[.status] as? Int,
               SCFrameStatus(rawValue: statusValue) == .complete,
               let buffer = CMSampleBufferGetImageBuffer(sampleBuffer) else { return }
-        CVPixelBufferLockBaseAddress(buffer, .readOnly)
-        defer { CVPixelBufferUnlockBaseAddress(buffer, .readOnly) }
-        guard let base = CVPixelBufferGetBaseAddress(buffer) else { return }
-        let w = CVPixelBufferGetWidth(buffer), h = CVPixelBufferGetHeight(buffer), rowBytes = CVPixelBufferGetBytesPerRow(buffer)
-        let copy = Data(bytes: base, count: rowBytes * h)
+        // Keep only the area itself: the buffer can be padded around it (see capturedContent).
+        let crop = capturedContent(attachments.first, width: CVPixelBufferGetWidth(buffer), height: CVPixelBufferGetHeight(buffer))
+        guard let (copy, w, h) = copyPixels(buffer, crop) else { return }
+        if !loggedGeometry {
+            loggedGeometry = true
+            log(.verbose, "Alert capture \(sourceId): buffer \(CVPixelBufferGetWidth(buffer))x\(CVPixelBufferGetHeight(buffer)), content \(crop)")
+        }
         lock.withLock {
             pixels = copy
-            width = w; height = h; stride = rowBytes
+            width = w; height = h; stride = w * 4
+            // Pixels per window point, from the content actually delivered.
+            if areaWidth > 0 { scale = Double(w) / areaWidth }
             sequence += 1
         }
     }

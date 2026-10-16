@@ -29,6 +29,8 @@ internal sealed class MacAlertPlatform : IAlertPlatform
         if (!MacNative.TryGetWindowBounds(windowId, out var bounds)) return AlertSelection.Failed("The client window is not available.");
         var still = await Task.Run(() => MacNative.CaptureWindow(windowId, (int)(bounds.Width * 2), (int)(bounds.Height * 2)));
         if (still == null) return AlertSelection.Failed("The client could not be captured. Check Screen Recording access on the macOS page.");
+        // The capture waits for a client that is still resizing; cover its final frame.
+        if (!MacNative.TryGetWindowBounds(windowId, out bounds)) return AlertSelection.Failed("The client window is not available.");
         var listRect = await RegionSelector.SelectAsync(bounds, still, ToRect(list),
             "Drag over the Local member list: the standing icons and the names. Esc cancels.", new Size(12, 12));
         if (listRect is not { } member) return null;

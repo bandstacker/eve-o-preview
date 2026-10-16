@@ -263,7 +263,76 @@ public func eom_thumbnail_destroy(_ id: Int64) {
     }
 }
 
-/// One still image of a window as PNG, scaled to fit maxWidth x maxHeight pixels.
+/// The pixels of a captured buffer that show the source. ScreenCaptureKit keeps the source's aspect ratio
+/// and pads the rest of the buffer (EVE clients fill as little as 76% of the width). contentRect is in points
+/// and is scaled by scaleFactor when that still fits the buffer, as for live previews.
+func capturedContent(_ info: [SCStreamFrameInfo: Any]?, width: Int, height: Int) -> CGRect {
+    let full = CGRect(x: 0, y: 0, width: width, height: height)
+    guard let info, let dictionary = info[.contentRect] as? NSDictionary,
+          let rect = CGRect(dictionaryRepresentation: dictionary as CFDictionary), rect.width > 0, rect.height > 0 else { return full }
+    let scale = (info[.scaleFactor] as? Double) ?? 1
+    let factor = rect.width * scale <= Double(width) + 1 ? scale : 1
+    let pixels = CGRect(x: rect.origin.x * factor, y: rect.origin.y * factor, width: rect.width * factor, height: rect.height * factor)
+        .integral.intersection(full)
+    return pixels.width >= 1 && pixels.height >= 1 ? pixels : full
+}
+
+/// Copies a pixel rectangle of a BGRA buffer into tightly packed rows.
+func copyPixels(_ buffer: CVPixelBuffer, _ crop: CGRect) -> (data: Data, width: Int, height: Int)? {
+    CVPixelBufferLockBaseAddress(buffer, .readOnly)
+    defer { CVPixelBufferUnlockBaseAddress(buffer, .readOnly) }
+    guard let base = CVPixelBufferGetBaseAddress(buffer) else { return nil }
+    let rowBytes = CVPixelBufferGetBytesPerRow(buffer)
+    let x = Int(crop.minX), y = Int(crop.minY), width = Int(crop.width), height = Int(crop.height)
+    guard width > 0, height > 0 else { return nil }
+    var data = Data(count: width * height * 4)
+    data.withUnsafeMutableBytes { target in
+        for row in 0..<height {
+            memcpy(target.baseAddress! + row * width * 4, base + (y + row) * rowBytes + x * 4, width * 4)
+        }
+    }
+    return (data, width, height)
+}
+
+/// Receives the first complete frame of a short stream, with its content-rectangle attachments
+/// (a screenshot carries none, so a padded window could not be cropped).
+private final class FrameGrabber: NSObject, SCStreamOutput {
+    private let lock = NSLock()
+    private var continuation: CheckedContinuation<CMSampleBuffer?, Never>?
+
+    func stream(_ stream: SCStream, didOutputSampleBuffer sampleBuffer: CMSampleBuffer, of type: SCStreamOutputType) {
+        guard type == .screen, sampleBuffer.isValid,
+              let attachments = CMSampleBufferGetSampleAttachmentsArray(sampleBuffer, createIfNecessary: false) as? [[SCStreamFrameInfo: Any]],
+              let status = attachments.first?[.status] as? Int, SCFrameStatus(rawValue: status) == .complete else { return }
+        finish(sampleBuffer)
+    }
+
+    func finish(_ sample: CMSampleBuffer?) {
+        lock.withLock { let waiting = continuation; continuation = nil; return waiting }?.resume(returning: sample)
+    }
+
+    static func grab(_ window: SCWindow, _ config: SCStreamConfiguration) async -> CMSampleBuffer? {
+        let grabber = FrameGrabber()
+        let stream = SCStream(filter: SCContentFilter(desktopIndependentWindow: window), configuration: config, delegate: nil)
+        do { try stream.addStreamOutput(grabber, type: .screen, sampleHandlerQueue: DispatchQueue(label: "eveo.still")) } catch { return nil }
+        let sample: CMSampleBuffer? = await withCheckedContinuation { continuation in
+            grabber.lock.withLock { grabber.continuation = continuation }
+            Task {
+                do { try await stream.startCapture() } catch { grabber.finish(nil) }
+            }
+            Task {
+                try? await Task.sleep(nanoseconds: 2_000_000_000)
+                grabber.finish(nil)
+            }
+        }
+        try? await stream.stopCapture()
+        return sample
+    }
+}
+
+/// One still image of a window as PNG, scaled to fit maxWidth x maxHeight pixels and cropped to the window content.
+/// A client resized in the background (for example by restored client layouts) can keep drawing at its old size
+/// until it is activated; the capture is retried for up to two seconds until the content fills the window frame.
 @_cdecl("eom_capture_window_png")
 public func eom_capture_window_png(_ windowId: UInt32, _ maxWidth: Int32, _ maxHeight: Int32,
                                    _ length: UnsafeMutablePointer<Int32>?) -> UnsafeMutablePointer<UInt8>? {
@@ -271,17 +340,37 @@ public func eom_capture_window_png(_ windowId: UInt32, _ maxWidth: Int32, _ maxH
     var result: Data?
     Task.detached {
         defer { semaphore.signal() }
-        guard let window = try? await ShareableContent.window(windowId) else { return }
-        let config = SCStreamConfiguration()
-        let scale = min(Double(maxWidth) / window.frame.width, Double(maxHeight) / window.frame.height, 2)
-        config.width = max(16, Int(window.frame.width * scale))
-        config.height = max(16, Int(window.frame.height * scale))
-        config.showsCursor = false
-        guard let image = try? await SCScreenshotManager.captureImage(
-            contentFilter: SCContentFilter(desktopIndependentWindow: window), configuration: config) else { return }
+        var still: (data: Data, width: Int, height: Int)?
+        for attempt in 0..<9 {
+            if attempt > 0 { try? await Task.sleep(nanoseconds: 250_000_000) }
+            ShareableContent.invalidate(windowId)
+            guard let window = try? await ShareableContent.window(windowId) else { continue }
+            let config = SCStreamConfiguration()
+            let scale = min(Double(maxWidth) / window.frame.width, Double(maxHeight) / window.frame.height, 2)
+            config.width = max(16, Int(window.frame.width * scale))
+            config.height = max(16, Int(window.frame.height * scale))
+            config.pixelFormat = kCVPixelFormatType_32BGRA
+            config.showsCursor = false
+            config.scalesToFit = true
+            config.capturesAudio = false
+            guard let sample = await FrameGrabber.grab(window, config), let buffer = CMSampleBufferGetImageBuffer(sample) else { continue }
+            let info = (CMSampleBufferGetSampleAttachmentsArray(sample, createIfNecessary: false) as? [[SCStreamFrameInfo: Any]])?.first
+            let bufferWidth = CVPixelBufferGetWidth(buffer), bufferHeight = CVPixelBufferGetHeight(buffer)
+            let crop = capturedContent(info, width: bufferWidth, height: bufferHeight)
+            still = copyPixels(buffer, crop)
+            let settled = abs(crop.width - Double(bufferWidth)) <= 4 && abs(crop.height - Double(bufferHeight)) <= 4
+            log(.verbose, "Still \(windowId) attempt \(attempt): frame \(window.frame), buffer \(bufferWidth)x\(bufferHeight), content \(crop)")
+            if settled { break }
+        }
+        guard let (data, width, height) = still,
+              let provider = CGDataProvider(data: data as CFData),
+              let image = CGImage(width: width, height: height, bitsPerComponent: 8, bitsPerPixel: 32, bytesPerRow: width * 4,
+                                  space: CGColorSpace(name: CGColorSpace.sRGB)!,
+                                  bitmapInfo: CGBitmapInfo(rawValue: CGImageAlphaInfo.premultipliedFirst.rawValue | CGBitmapInfo.byteOrder32Little.rawValue),
+                                  provider: provider, decode: nil, shouldInterpolate: true, intent: .defaultIntent) else { return }
         result = NSBitmapImageRep(cgImage: image).representation(using: .png, properties: [:])
     }
-    if semaphore.wait(timeout: .now() + 3) == .timedOut { length?.pointee = 0; return nil }
+    if semaphore.wait(timeout: .now() + 6) == .timedOut { length?.pointee = 0; return nil }
     guard let data = result else { length?.pointee = 0; return nil }
     return allocBuffer(data, length)
 }
