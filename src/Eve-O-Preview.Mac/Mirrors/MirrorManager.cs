@@ -75,7 +75,8 @@ public sealed class MirrorManager : IDisposable
 
     private void Refresh()
     {
-        bool hidden = _configuration.IsTemporarilyHidingAllThumbnails || _selecting;
+        // Mirrors follow the previews: Hide all previews and Hide previews outside EVE apply to both.
+        bool hidden = _configuration.IsTemporarilyHidingAllThumbnails || _thumbnails.ArePreviewsHiddenOutsideEve || _selecting;
         bool maintain = ++_maintenance % 4 == 0;
         foreach (var mirror in _mirrors)
         {

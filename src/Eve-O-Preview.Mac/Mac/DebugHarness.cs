@@ -155,7 +155,7 @@ internal sealed class DebugHarness
         var text = new StringBuilder();
         var (window, pid) = MacNative.FrontmostWindow();
         text.AppendLine($"frontmost pid={pid} window={window}");
-        text.AppendLine($"active={_thumbnails.GetActiveClient()?.Title}");
+        text.AppendLine($"active={_thumbnails.GetActiveClient()?.Title} hiddenOutsideEve={_thumbnails.ArePreviewsHiddenOutsideEve}");
         foreach (var process in _processes.GetAllProcesses())
             text.AppendLine($"client '{process.Title}' pid={process.ProcessId} window={process.MainWindowHandle} eve={process.IsEveClient} " +
                             $"hidden={MacNative.IsApplicationHidden(process.ProcessId) != 0} muted={MacNative.AudioIsMuted(process.ProcessId) != 0}");

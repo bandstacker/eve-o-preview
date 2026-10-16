@@ -48,7 +48,7 @@ internal sealed class MirrorModuleView : UserControl, IWorkspaceLiveModule, IDis
             Muted("Choose a character. EVE-O brings that client to the front; drag a box over the part of its window to mirror, for example Local chat. The mirror then works like a preview: drag to move, drag an edge to resize, click to switch to the client, right-click for options."),
             Row(Label("Client"), _client, create),
             _status));
-        root.Children.Add(Card("Your mirrors", Muted("Mirrors belong to the current profile and show while their client runs. Hide all previews hides them too."), _list));
+        root.Children.Add(Card("Your mirrors", Muted("Mirrors belong to the current profile and show while their client runs. They hide together with the previews."), _list));
         Content = root;
         _mirrors.Changed += OnChanged;
         RefreshWorkspace();
