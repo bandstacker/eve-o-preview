@@ -390,6 +390,10 @@ namespace EveOPreview.Services
             bindings.Add(new(_configuration.MinimizeAllClientsHotkey,
                 () => _ = _mediator.Send(new MinimizeAllClients()), onRelease));
             bindings.Add(new(_configuration.CycleLoginClientsHotkey, CycleLoginClients, onRelease, CycleShortcutsApply));
+            bindings.Add(new(_configuration.AcknowledgeAlertsHotkey ?? "",
+                () => _ = _mediator.Publish(new AlertShortcut(AlertShortcutAction.Acknowledge)), onRelease));
+            bindings.Add(new(_configuration.ToggleAlertsHotkey ?? "",
+                () => _ = _mediator.Publish(new AlertShortcut(AlertShortcutAction.TogglePause)), onRelease));
             _hotkeys.Replace(bindings, _configuration.UseWindowsHotkeys ? HotkeyMode.OperatingSystem : HotkeyMode.Global, _diagnosticHotkeyPassthrough);
         }
 

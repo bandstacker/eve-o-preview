@@ -195,7 +195,9 @@ public sealed partial class WorkspaceView
             && (s.Matches(_query) || _localization.Contains($"{L(s.Label)} {L(s.Description)} {L(PageLabel(s.Page))}", _query))).ToArray();
         var routes = new[] { ("Switching", "Cycle groups, hotkeys and keyboard shortcuts"), ("Clients", "Active clients and preview visibility"), ("ClientSettings", "Character colors & minimization"), ("Profiles", "Profiles, clone, rename, delete and profile accent color"), ("Appearance", "Appearance, themes, Light, Dark and Legacy") };
         var showGlobalShortcuts = "hide all show all minimize all minimise all global hotkey keyboard shortcuts ToggleHideAllActiveHotkey MinimizeAllClientsHotkey".Contains(_query, StringComparison.OrdinalIgnoreCase)
-            || !_theme.Legacy && _localization.Contains(L("Cycle login clients") + " login logon account username pid CycleLoginClientsHotkey", _query);
+            || !_theme.Legacy && _localization.Contains(L("Cycle login clients") + " login logon account username pid CycleLoginClientsHotkey", _query)
+            || !_theme.Legacy && _snapshot.Settings.ContainsKey("AcknowledgeAlertsHotkey")
+                && _localization.Contains(L("Acknowledge alerts") + " " + L("Pause / resume alerts") + " alarm local AcknowledgeAlertsHotkey ToggleAlertsHotkey", _query);
         bool showGroupLogin = !_theme.Legacy && _localization.Contains(L("Include login clients") + " group login logon account character order IncludeLoginClients", _query);
         var featureMatches = routes.Where(r => r.Item2.Contains(_query, StringComparison.OrdinalIgnoreCase) || _localization.Contains(L(r.Item2), _query)
             || r.Item1 == "Clients" && !_theme.Legacy && _localization.Contains(L("Other applications") + " application process executable non eve thumbnail", _query)

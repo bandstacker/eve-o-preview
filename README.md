@@ -51,6 +51,7 @@ This downloads the project's public root certificate and adds it to the computer
 | Customize character names, fonts, colors and borders | **Previews & layout → Title & highlight** |
 | Change visibility, window positioning or close-to-tray behavior | **Previews & layout → Window behavior** |
 | Set cycling hotkeys or rearrange characters | **Switching & hotkeys** |
+| Get an alarm when a hostile or neutral enters Local | **Local alerts** (Light/Dark) |
 | Limit FPS, manage CPU affinity or mute selected sounds | **Performance & audio** |
 | Clone, rename or switch configurations | Top **Profile** dropdown → **Manage profiles…** |
 | Show damage, repairs, systems or incoming-damage flashes | **Augments**; title/system placement is in **Title & highlight** |
@@ -187,6 +188,22 @@ Both options switch windows only; they do not choose or log in a character.
 If a character is back in station or otherwise out of the fight, use its skip control in the order editor or right-click its preview. Skipping applies to **all cycle groups in the current profile**, without removing the character or changing its place in the order.
 
 A red circle with a diagonal line appears beside its preview title by default. Choose another marker or color in **Title & highlight**. The marker remains visible even if character names are hidden. Re-enable the character when ready; skipping is temporary session state, tracked separately for each profile. It survives switching away and back, and resets when EVE-O restarts.
+
+## Local alerts
+
+EVE-O can watch a character's Local member list and sound an alarm when someone who is not friendly appears, also while that client is behind other windows. It only reads the client's picture; it never presses keys or clicks in EVE. Whether CCP accepts tools like this is your decision.
+
+1. In EVE, show the Local member list without portraits and turn on the standing icon for neutral pilots, so pilots without standings show an icon too.
+2. Open **Local alerts** (Light/Dark), choose a character and click **Select areas...**. EVE-O brings that client to the front: drag a box over the member list (icons and names), then a small box over the member count. Press Esc at the second step to skip the count.
+3. If your clients share the same window layout, **Use these areas for all characters** sets up every running character at once.
+
+**What alarms:** every standing icon except corp (green), alliance and positive standings (blue) and fleet (purple), so red, orange, neutral, suspect and criminal pilots; and a member count that rises without a new friendly icon (a pilot EVE-O cannot see, for example one scrolled out of view). Pilots already in Local when a watch starts alarm too.
+
+**When it alarms:** the alarm sound plays, the character's preview pulses red until Local is clear, and a reminder sounds every 30 seconds while someone stays. Switching to that character (click its preview or cycle to it), or the **Acknowledge alerts** shortcut, stops the reminders until the next arrival. **Pause / resume alerts** turns every watch off. Both shortcuts are under **Switching & hotkeys > Global shortcuts** and are empty by default. Sounds, volume, reminders and the scan rate are on the **Local alerts** page.
+
+**Discord:** paste a channel webhook URL under **Discord**. Each arrival posts the system, the character and an image of the watched member list; an "All clear" message follows once Local is clean. Only the selected member-list area is sent. The system name comes from the chat logs, so Augments log reading must be on; otherwise the message says "Unknown system". If Discord rejects the webhook, EVE-O turns Discord messages off and shows why.
+
+**Limits:** a minimized client draws nothing, so its watch pauses ("Watch paused" on its preview) until the client is restored. Only visible rows are checked. Use **Show what EVE-O sees** on a watch to check what it recognises: alarming icons are outlined in red, ignored ones in green.
 
 ## Themes and right-click menus
 

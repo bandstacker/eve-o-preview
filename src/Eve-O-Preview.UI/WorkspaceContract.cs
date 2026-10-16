@@ -96,7 +96,7 @@ public sealed record CycleGroupItem(int Id, string Name, IReadOnlyList<string> C
 // group-client-move (Target=group id, Value=full title, Position=zero-based destination),
 // client-cycle-skip (Target=full title, Value=true/false): session-only, across all groups,
 // application-add/remove (Target=executable process name without extension),
-// hotkey-capture/clear (Target=ToggleHideAllActiveHotkey/MinimizeAllClientsHotkey/CycleLoginClientsHotkey
+// hotkey-capture/clear (Target=ToggleHideAllActiveHotkey/MinimizeAllClientsHotkey/CycleLoginClientsHotkey/AcknowledgeAlertsHotkey/ToggleAlertsHotkey
 // or group:{id}:forward/backward:{slot}), documentation, discord, exit.
 // preview-size-limits (Settings=four size bounds); client-preferences (Target=title,
 // Value=border color or empty to inherit, Settings[Priority]=true/false).

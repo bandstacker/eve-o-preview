@@ -682,7 +682,32 @@ public abstract partial class ThumbnailView : Window, IThumbnailView, IDisposabl
     public void SetOverlayStats(IReadOnlyList<OverlayStat> stats) => _overlay.SetStats(stats);
     public void SetOverlayStats(IReadOnlyList<OverlayStat> stats, OverlayStatsStyle style) => _overlay.SetStats(stats, style);
     public void SetSystemName(string system, uint color, SubtitlePlacement placement = SubtitlePlacement.Below, float? fontSize = null)
-        => _overlay.SetSubtitle(system, color, placement, fontSize);
+    {
+        _systemLine = (system ?? "", color, placement, fontSize);
+        ApplySubtitle();
+    }
+
+    /// <summary>A short status (for example a paused Local watch) shown after the system name, in its own colour.</summary>
+    public void SetWatchNote(string note, uint color)
+    {
+        if (_watchNote.Text == (note ?? "") && _watchNote.Color == color) return;
+        _watchNote = (note ?? "", color);
+        ApplySubtitle();
+    }
+
+    private (string Text, uint Color, SubtitlePlacement Placement, float? Size) _systemLine = ("", 0xFFD4E8FF, SubtitlePlacement.Below, null);
+    private (string Text, uint Color) _watchNote = ("", 0);
+
+    private void ApplySubtitle()
+    {
+        var (system, color, placement, size) = _systemLine;
+        if (_watchNote.Text.Length > 0)
+        {
+            system = system.Length > 0 ? system + " · " + _watchNote.Text : _watchNote.Text;
+            color = _watchNote.Color;
+        }
+        _overlay.SetSubtitle(system, color, placement, size);
+    }
     public void SetDamageTitleColor(uint? color) => _overlay.SetTitleColor(color);
     public void SetDamageFlash(uint? titleColor, uint? tint, double intensity = 1) => _overlay.SetDamageFlash(titleColor, tint, intensity);
     public void SetTitlePosition(OverlayPosition position) => _overlay.SetTitlePosition(position);
