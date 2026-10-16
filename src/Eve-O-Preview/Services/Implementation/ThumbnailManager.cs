@@ -681,6 +681,8 @@ namespace EveOPreview.Services
                 this._hideThumbnailsDelay = this._configuration.HideThumbnailsDelay; // Reset the counter
             }
 
+            _previewsHiddenOutsideEve = hideAllThumbnails;
+
             this._refreshCycleCount++;
 
             bool forceRefresh;
@@ -835,6 +837,8 @@ namespace EveOPreview.Services
         }
 
         private Size _appliedThumbnailSize;
+        private bool _previewsHiddenOutsideEve;
+        public bool ArePreviewsHiddenOutsideEve => _previewsHiddenOutsideEve;
         private Size _resizeAllDefault;
         private Size _resizeAllOrigin;
         private Dictionary<string, Size> _resizeAllSizes = new();
