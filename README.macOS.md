@@ -41,6 +41,7 @@ Everything works as described in the [main guide](README.md), with these Mac dif
 | Windows | macOS |
 | --- | --- |
 | Ctrl in shortcuts and gestures | **Command (⌘)**. A shortcut saved as `Ctrl+F1` is ⌘F1. Option is Alt; Control is not used in shortcuts. |
+| Cycle only while EVE is focused | Same, with the keys always passed on to the active application (there is no Windows hotkeys mode). |
 | Ctrl+click a preview (minimize) | **⌘-click** hides that client. Click its preview or cycle to it to bring it back. |
 | Minimize / Minimize all | Hides clients (instant, per client). |
 | System tray | Menu bar. |

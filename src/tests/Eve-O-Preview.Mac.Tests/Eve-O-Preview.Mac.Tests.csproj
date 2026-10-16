@@ -21,5 +21,6 @@
     <!-- Shared host tests that need no Windows APIs run against the macOS host build too. -->
     <Compile Include="../Eve-O-Preview.Tests/Infrastructure/Stub.cs" Link="Shared/Stub.cs" />
     <Compile Include="../Eve-O-Preview.Tests/Checks/UsePreviewForAllTests.cs" Link="Shared/UsePreviewForAllTests.cs" />
+    <Compile Include="../Eve-O-Preview.Tests/Checks/CycleFocusTests.cs" Link="Shared/CycleFocusTests.cs" />
   </ItemGroup>
 </Project>

@@ -97,6 +97,7 @@ static class MacProgram
         SettingCatalog.ConfigurePlatform(s => !unsupported.Contains(s.Key),
         [
             new("MinimizeToTray", "Close to the menu bar", "Keep EVE-O Preview running in the menu bar when the settings window closes.", "General", SettingKind.Toggle, Aliases: "tray system tray menu bar status close hide"),
+            new("CycleHotkeysRequireEveFocus", "Cycle only while EVE is focused", "Cycle shortcuts act only when an EVE client is the active window. Elsewhere the keys reach the application you are using.", "Hotkeys", SettingKind.Toggle, Aliases: "focus focused active window only in eve game typing chat discord browser cycle shortcut hotkey ignore pass through"),
             new("MinimizeInactiveClients", "Hide inactive clients", "Hide the previous character's client when switching (macOS Hide).", "General", SettingKind.Toggle, Aliases: "minimize inactive hide"),
             new("EnableAutomaticCpuAffinity", "Efficiency cores for background clients", "Run background EVE clients on efficiency cores at low priority. The active and next clients and login screens are never limited.", "FpsAudio", SettingKind.Toggle, Aliases: "cpu affinity performance cores efficiency cores background priority battery"),
             new("PreviewFrameRate", "Live preview frame rate", "Frames per second for each live preview. Lower values use less battery; this does not change the game's frame rate.", "FpsAudio", SettingKind.Number, 1, 60, Aliases: "fps preview frame rate capture refresh"),
