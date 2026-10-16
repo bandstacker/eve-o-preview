@@ -512,6 +512,7 @@ public sealed partial class WindowsWorkspaceBackend : IWorkspaceBackend, IWorksp
     {
         // Explicit bindings only. Never populate a profile from a UI snapshot:
         // layout dictionaries and shared nested objects must survive edits.
+        Bind("CycleHotkeysRequireEveFocus", () => _configuration.CycleHotkeysRequireEveFocus, value => _configuration.CycleHotkeysRequireEveFocus = bool.Parse(value));
         Bind("EnableThumbnailSnap", () => _configuration.EnableThumbnailSnap, value => _configuration.EnableThumbnailSnap = bool.Parse(value));
         Bind("EnableCompatibilityMode", () => _configuration.EnableCompatibilityMode, value => _configuration.EnableCompatibilityMode = bool.Parse(value));
         Bind("ThumbnailRefreshPeriod", () => _configuration.ThumbnailRefreshPeriod, value => _configuration.ThumbnailRefreshPeriod = Integer(value));

@@ -273,6 +273,8 @@ namespace EveOPreview.Services
 
         private void ForegroundWindowChanged(IntPtr handle)
         {
+            // Foreground events keep cycle shortcuts current between refreshes.
+            _eveClientFocused = _processMonitor.LookupCachedProcessByWindowHandle(handle)?.IsEveClient == true;
             if (_stopped || !_thumbnailViews.ContainsKey(handle) || _foregroundRefreshPending) return;
             // WinEvent callbacks can reenter during native activation. Coalesce them
             // into the UI queue and read the latest foreground after native dispatch;
@@ -379,15 +381,15 @@ namespace EveOPreview.Services
                 var order = new SortedDictionary<int, string>(group.ClientsOrder);
                 bool includeLoginClients = group.IncludeLoginClients;
                 foreach (var key in group.ForwardHotkeys)
-                    bindings.Add(new(key, () => CycleGroupClients(true, order, includeLoginClients), onRelease));
+                    bindings.Add(new(key, () => CycleGroupClients(true, order, includeLoginClients), onRelease, CycleShortcutsApply));
                 foreach (var key in group.BackwardHotkeys)
-                    bindings.Add(new(key, () => CycleGroupClients(false, order, includeLoginClients), onRelease));
+                    bindings.Add(new(key, () => CycleGroupClients(false, order, includeLoginClients), onRelease, CycleShortcutsApply));
             }
             bindings.Add(new(_configuration.ToggleHideActiveClientsHotkey,
                 () => _ = _mediator.Send(new ThumbnailToggleHideAll()), onRelease));
             bindings.Add(new(_configuration.MinimizeAllClientsHotkey,
                 () => _ = _mediator.Send(new MinimizeAllClients()), onRelease));
-            bindings.Add(new(_configuration.CycleLoginClientsHotkey, CycleLoginClients, onRelease));
+            bindings.Add(new(_configuration.CycleLoginClientsHotkey, CycleLoginClients, onRelease, CycleShortcutsApply));
             _hotkeys.Replace(bindings, _configuration.UseWindowsHotkeys ? HotkeyMode.OperatingSystem : HotkeyMode.Global, _diagnosticHotkeyPassthrough);
         }
 
@@ -605,6 +607,9 @@ namespace EveOPreview.Services
 
             // The foreground window can be NULL in certain circumstances, such as when a window is losing activation.
             // It is safer to just skip this refresh round than to do something while the system state is undefined
+            // Updated before the null check so focus on the desktop or a windowless app clears it.
+            _eveClientFocused = foregroundWindowHandle != IntPtr.Zero
+                && _processMonitor.LookupCachedProcessByWindowHandle(foregroundWindowHandle)?.IsEveClient == true;
             if (foregroundWindowHandle == IntPtr.Zero)
             {
                 _logger.Verbose("ThumbnailManager.RefreshThumbnails: Foreground window is null, skipping refresh");
@@ -839,6 +844,10 @@ namespace EveOPreview.Services
         private Size _appliedThumbnailSize;
         private bool _previewsHiddenOutsideEve;
         public bool ArePreviewsHiddenOutsideEve => _previewsHiddenOutsideEve;
+        // Written on the UI thread, read by cycle shortcuts on the input thread.
+        private volatile bool _eveClientFocused;
+        // Runs for every matching key press: a field read only, no lookups or logging.
+        private bool CycleShortcutsApply() => !_configuration.CycleHotkeysRequireEveFocus || _eveClientFocused;
         private Size _resizeAllDefault;
         private Size _resizeAllOrigin;
         private Dictionary<string, Size> _resizeAllSizes = new();

@@ -310,7 +310,8 @@ public sealed class WindowsHotkeyService : IHotkeyService
         }
         if (message == HotkeyMessage)
         {
-            if (_capture == null && _registered.TryGetValue(wParam.ToInt32(), out var binding)) _dispatch.Enqueue(binding.Execute);
+            // RegisterHotKey always consumes the keys; a condition can only skip the action.
+            if (_capture == null && _registered.TryGetValue(wParam.ToInt32(), out var binding) && binding.When?.Invoke() != false) _dispatch.Enqueue(binding.Execute);
             return true;
         }
         if (message != PassedInputMessage) return false;

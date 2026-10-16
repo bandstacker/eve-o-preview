@@ -62,6 +62,8 @@ internal sealed class WindowsHotkeyMatcher(Action<Action> dispatch)
             return true;
         }
         if (modifier || _down[0x5B] || _down[0x5C] || !_bindings.TryGetValue(chord, out var binding)) return false;
+        // A conditional shortcut that does not apply now is left to the focused application.
+        if (binding.When?.Invoke() == false) return false;
         _consumed[key] = binding;
         if (!binding.OnRelease) dispatch(binding.Execute);
         return true;

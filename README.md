@@ -166,6 +166,8 @@ each character's detailed damage, repair and travel history from a compact row.
 
 Choose shortcuts that do not conflict with your normal EVE controls. If you want a shortcut to work while holding a modifier, configure that combination too.
 
+**Cycle only while playing:** turn on **Switching & hotkeys > Global shortcuts > Cycle only while EVE is focused** (Light/Dark). The cycle shortcuts, including **Cycle login clients**, then act only while an EVE client is the active window; in a browser, Discord or any other application the keys reach that application as usual. With **Windows hotkeys**, Windows still captures the keys, so they simply do nothing there. Hide and minimize shortcuts are not affected. The setting is saved per profile and is off by default.
+
 ### Cycle at the login screen
 
 These options are available in Light and Dark, including when every EVE window is titled "Eve".
