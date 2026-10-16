@@ -24,6 +24,7 @@ The short `AGENTS.md` files provide discovery and local constraints, while the p
 | [UI review and preservation map](docs/ai/ui-review.md) | Source UI/UX audit, legacy control parity, theme and profile identity requirements, future DPS/ESI boundaries |
 | [Windows and thumbnails](docs/ai/windows-and-thumbnails.md) | Discovery, DWM/static rendering, overlays, MRU z-order, focus, hotkeys, prediction, CPU affinity, ownership |
 | [Preview rendering](docs/ai/preview-rendering.md) | Portable presentation/graphics contracts, Windows DWM and native composition, compatibility fallback and validation |
+| [Local alerts](docs/ai/local-alerts.md) | Watching Local member lists: standing-icon detection, count reading, alarm rules, sounds, preview pulse, Discord and the platform capture seam |
 | [Augments: combat logs, alpha, DPS and location](docs/ai/combat-logs.md) | Event-driven shared file reads, automatic/manual folder selection, parsed storage, classification, thumbnail styling and simulation |
 | [Log language and event parsing](docs/ai/log-languages.md) | Automatic/manual log language, overview markup, multilingual combat/travel/decloak/mining/bounty events and SDE names |
 | [Robin and native integration](docs/ai/robin.md) | Injection lifecycle, pipe bytes, DXGI vtable hooks, frame pacing, audio interception, sidecar diagnostics |

@@ -94,6 +94,8 @@ namespace EveOPreview.Mediator.Handlers.Configuration
         {
             var hotkeysInConfig = new Dictionary<Keys, string>();
             AddOrMeaningfulError(hotkeysInConfig, _config.CycleLoginClientsHotkey.ToHotkeys(), "Cycle login clients");
+            AddOrMeaningfulError(hotkeysInConfig, (_config.AcknowledgeAlertsHotkey ?? "").ToHotkeys(), "Acknowledge alerts");
+            AddOrMeaningfulError(hotkeysInConfig, (_config.ToggleAlertsHotkey ?? "").ToHotkeys(), "Pause / resume alerts");
 
             if (_config.ToggleHideActiveClientsHotkeyParsed != Keys.None)
             {

@@ -91,6 +91,8 @@ namespace EveOPreview.Configuration
         string ToggleHideActiveClientsHotkey { get; set; }
         string MinimizeAllClientsHotkey { get; set; }
         string CycleLoginClientsHotkey { get; set; }
+        string AcknowledgeAlertsHotkey { get; set; }
+        string ToggleAlertsHotkey { get; set; }
         List<string> PreviewApplications { get; set; }
         Keys ToggleHideActiveClientsHotkeyParsed { get; set; }
         Keys MinimizeAllClientsHotkeyParsed { get; set; }

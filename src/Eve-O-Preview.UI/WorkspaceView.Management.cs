@@ -55,6 +55,12 @@ public sealed partial class WorkspaceView
         }
         var shortcuts = new StackPanel { Spacing = 12, Children = { Text("GLOBAL SHORTCUTS", 10, _theme.Accent, true), Text("Use Record, then press a key combination. Escape cancels capture. Clear removes the binding.", 11, _theme.Muted), HotkeyRow("Show / hide all previews", "ToggleHideAllActiveHotkey", _snapshot.Settings.GetValueOrDefault("ToggleHideAllActiveHotkey", "")), HotkeyRow("Minimize all clients", "MinimizeAllClientsHotkey", _snapshot.Settings.GetValueOrDefault("MinimizeAllClientsHotkey", "")) } };
         if (!_theme.Legacy) shortcuts.Children.Add(HotkeyRow("Cycle login clients", "CycleLoginClientsHotkey", _snapshot.Settings.GetValueOrDefault("CycleLoginClientsHotkey", "")));
+        // Hosts with Local alerts publish these keys.
+        if (!_theme.Legacy && _snapshot.Settings.TryGetValue("AcknowledgeAlertsHotkey", out var acknowledge))
+        {
+            shortcuts.Children.Add(HotkeyRow("Acknowledge alerts", "AcknowledgeAlertsHotkey", acknowledge));
+            shortcuts.Children.Add(HotkeyRow("Pause / resume alerts", "ToggleAlertsHotkey", _snapshot.Settings.GetValueOrDefault("ToggleAlertsHotkey", "")));
+        }
         _page.Children.Add(Card(shortcuts));
     }
 

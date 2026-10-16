@@ -119,6 +119,12 @@ public sealed partial class WindowsWorkspaceBackend : IWorkspaceBackend, IWorksp
         values["HotkeyRegistrationWarning"] = LocalizedHotkeyWarning();
         values["MinimizeAllClientsHotkey"] = _view.MinimizeAllClientsHotkey ?? "";
         values["CycleLoginClientsHotkey"] = _configuration.CycleLoginClientsHotkey ?? "";
+        if (_alertHost != null)
+        {
+            // Present only on hosts with Local alerts, so other hosts do not show these shortcuts.
+            values["AcknowledgeAlertsHotkey"] = _configuration.AcknowledgeAlertsHotkey ?? "";
+            values["ToggleAlertsHotkey"] = _configuration.ToggleAlertsHotkey ?? "";
+        }
         values["ThumbnailMinimumWidth"] = Format(MinimumThumbnailSize.Width);
         values["ThumbnailMinimumHeight"] = Format(MinimumThumbnailSize.Height);
         values["ThumbnailMaximumWidth"] = Format(MaximumThumbnailSize.Width);
@@ -465,6 +471,16 @@ public sealed partial class WindowsWorkspaceBackend : IWorkspaceBackend, IWorksp
         {
             current = _configuration.CycleLoginClientsHotkey;
             set = value => _configuration.CycleLoginClientsHotkey = value;
+        }
+        else if (command.Target == "AcknowledgeAlertsHotkey")
+        {
+            current = _configuration.AcknowledgeAlertsHotkey;
+            set = value => _configuration.AcknowledgeAlertsHotkey = value;
+        }
+        else if (command.Target == "ToggleAlertsHotkey")
+        {
+            current = _configuration.ToggleAlertsHotkey;
+            set = value => _configuration.ToggleAlertsHotkey = value;
         }
         else if (command.Target is "ToggleHideAllActiveHotkey" or "MinimizeAllClientsHotkey")
         {

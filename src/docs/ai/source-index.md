@@ -26,6 +26,10 @@ For screen-region docking, follow [RegionsView](../../Eve-O-Preview.UI/RegionsVi
 
 For UI mirrors, follow [MirrorsView](../../Eve-O-Preview.UI/MirrorsView.cs) and [MirrorContract](../../Eve-O-Preview.UI/MirrorContract.cs) into [WindowsWorkspaceBackend.Mirrors](../../Eve-O-Preview/View/Implementation/WindowsWorkspaceBackend.Mirrors.cs) and [Mirrors/](../../Eve-O-Preview/Mirrors/): `MirrorManager` (lifetime, selection, persistence), `MirrorWindow` (nonactivating window and native pointer handling), `MirrorImage` (DWM relationship with `rcSource`), `MirrorRegionSelector` and `MirrorStore`. Coverage lives in [MirrorTests](../../tests/Eve-O-Preview.Tests/Checks/MirrorTests.cs) and [UI smoke Mirrors](../../tests/Eve-O-Preview.UI.Smoke/Program.Mirrors.cs). See the [runtime contract](windows-and-thumbnails.md#ui-mirrors).
 
+## Local alerts
+
+Local alerts start at [AlertsView](../../Eve-O-Preview.UI/AlertsView.cs) and [AlertContract](../../Eve-O-Preview.UI/AlertContract.cs), served by [WindowsWorkspaceBackend.Alerts](../../Eve-O-Preview/View/Implementation/WindowsWorkspaceBackend.Alerts.cs) and [AlertManager](../../Eve-O-Preview/Alerts/AlertManager.cs). Detection is [StandingDetector](../../Eve-O-Preview/Alerts/StandingDetector.cs) on [AlertFrame](../../Eve-O-Preview/Alerts/AlertFrame.cs) captures; alarm rules are [AlertWatchMonitor](../../Eve-O-Preview/Alerts/AlertWatchMonitor.cs); outputs are [AlertSounds](../../Eve-O-Preview/Alerts/AlertSounds.cs) (also count parsing) and [DiscordWebhook](../../Eve-O-Preview/Alerts/DiscordWebhook.cs); storage is [AlertModels](../../Eve-O-Preview/Alerts/AlertModels.cs) and [AlertStore](../../Eve-O-Preview/Alerts/AlertStore.cs); hosts implement [IAlertPlatform](../../Eve-O-Preview/Alerts/IAlertPlatform.cs). Shortcuts route through [AlertShortcut](../../Eve-O-Preview/Mediator/Messages/Alerts/AlertShortcut.cs) and [AlertShortcutHandler](../../Eve-O-Preview/Mediator/Handlers/Alerts/AlertShortcutHandler.cs). Coverage lives in [AlertTests](../../tests/Eve-O-Preview.Tests/Checks/AlertTests.cs) and [UI smoke Alerts](../../tests/Eve-O-Preview.UI.Smoke/Program.Alerts.cs). See the [Local alerts guide](local-alerts.md).
+
 ## Repository root
 
 | File | Responsibility / review note | Guide |
@@ -351,6 +355,7 @@ preserving character order, skips, wraparound and prediction.
 - [Main-app instructions](../../Eve-O-Preview/AGENTS.md), [Robin instructions](../../Eve-O-Preview.Robin/AGENTS.md), [test instructions](../../tests/AGENTS.md): local entry points.
 - [Application/configuration guide](application-and-configuration.md), [window/thumbnail guide](windows-and-thumbnails.md), [Robin guide](robin.md), [build/test guide](build-and-test.md), and this index: detailed source context.
 - [Future feature backlog](feature-backlog.md): unimplemented/partial/exploratory ideas, current source distinctions and acceptance checks.
+- [Local alerts guide](local-alerts.md): standing-icon detection, alarm rules, capture seam, Discord and validation scope.
 
 Update the appropriate subsystem table when adding, deleting or moving a source file. Merge entries into their relevant sections; do not append chronological additions or treat a generated path list as evidence of a semantic review.
 
