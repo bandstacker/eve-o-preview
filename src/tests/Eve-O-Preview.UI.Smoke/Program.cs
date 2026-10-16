@@ -564,7 +564,7 @@ internal static partial class Program
         Require(ThumbnailMenuActions.IsDivider(addedDivider) && addedDivider != "divider:minimize", "Insert must create an explicit divider at the chosen gap.");
         Click(view, "menu-divider-remove-" + addedDivider);
         Click(view, "menu-divider-remove-divider:skip");
-        Require(!FindControl<Button>(view, "menu-order-down-resize").IsEnabled, "The last item cannot move down.");
+        Require(!FindControl<Button>(view, "menu-order-down-" + ThumbnailMenuActions.DefaultOrder[^1]).IsEnabled, "The last item cannot move down.");
         Require(backend.Read().ThumbnailMenuOrder!.Count == ThumbnailMenuActions.ActionIds.Count, "All actions must remain available.");
         var editor = FindControl<StackPanel>(view, "thumbnail-menu-editor");
         foreach (var button in editor.GetVisualDescendants().OfType<Button>())

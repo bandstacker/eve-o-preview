@@ -74,6 +74,9 @@ public abstract partial class ThumbnailView : Window, IThumbnailView, IDisposabl
     private readonly MenuItem _resizeAllItem;
     private readonly MenuItem _legacyResizeItem;
     private readonly MenuItem _undockItem;
+    private readonly MenuItem _useForAllItem;
+    private readonly MenuItem _useSizeForAllItem;
+    private readonly MenuItem _useLookForAllItem;
     private readonly Control[] _singleMenuItems;
     private readonly MenuItem _selectionMoveItem;
     private readonly MenuItem _selectionResizeItem;
@@ -167,6 +170,14 @@ public abstract partial class ThumbnailView : Window, IThumbnailView, IDisposabl
         resize.Items.Add(_aspectLockItem);
         resize.Items.Add(CreateMenuItem("menuResetSize", "Reset to default size", (_, _) => RunThumbnailEdit(ResetDefaultSize)));
         thumbnailContextMenu.Items.Add(resize);
+        _useForAllItem = new MenuItem { Name = "menuUseForAll", Header = "Use for all previews" };
+        _useSizeForAllItem = CreateMenuItem("menuUseSizeForAll", "This size", (_, _) => _ = _thumbnailManager.UseThumbnailSizeForAll(Id));
+        ToolTip.SetTip(_useSizeForAllItem, "Make this the default preview size and give every preview this size, including new characters. Undo restores the previous sizes.");
+        _useLookForAllItem = CreateMenuItem("menuUseLookForAll", "This border color and augments", (_, _) => _ = _mediator.Send(new UsePreviewLookForAll(Title)));
+        ToolTip.SetTip(_useLookForAllItem, "Use this character's border color and thumbnail augment settings for every preview, replacing per-character versions.");
+        _useForAllItem.Items.Add(_useSizeForAllItem);
+        _useForAllItem.Items.Add(_useLookForAllItem);
+        thumbnailContextMenu.Items.Add(_useForAllItem);
         _singleMenuItems = thumbnailContextMenu.Items.OfType<Control>().ToArray();
         _selectionMoveItem = CreateMenuItem("menuMoveSelected", "Move", (_, _) => BeginSelectionTransform(MouseMode.Move));
         _selectionResizeItem = CreateMenuItem("menuResizeSelected", "Resize", (_, _) => BeginSelectionTransform(MouseMode.Resize));
@@ -912,6 +923,10 @@ public abstract partial class ThumbnailView : Window, IThumbnailView, IDisposabl
         _resetAspectItem.IsEnabled = TryGetClientRatio(out _);
         thumbnailContextMenu.Items.Remove(_undockItem);
         NativeMenuTheme.ApplyThumbnailOrder(thumbnailContextMenu);
+        // Legacy keeps its original feature set.
+        if (legacy) thumbnailContextMenu.Items.Remove(_useForAllItem);
+        _useSizeForAllItem.IsEnabled = !docked;
+        _useLookForAllItem.IsEnabled = !string.IsNullOrWhiteSpace(Title);
         if (docked && !legacy) thumbnailContextMenu.Items.Add(_undockItem);
         if (!legacy && _thumbnailManager?.CanUndoThumbnailEdit == true) thumbnailContextMenu.Items.Add(_undoItem);
     }

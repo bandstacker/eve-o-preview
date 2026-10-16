@@ -32,6 +32,7 @@ public static class NativeMenuTheme
                 "move" => "menuReposition",
                 "resize-all" => "menuResizeAll",
                 "resize" => "resizeThumbnailToolStripMenuItem",
+                "use-for-all" => "menuUseForAll",
                 _ => ""
             });
         }).Where(item => item != null).ToArray();
