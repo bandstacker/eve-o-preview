@@ -111,6 +111,9 @@ namespace EveOPreview.Configuration.Implementation
         [JsonProperty("GlobalHotkeysOnRelease")]
         public bool GlobalHotkeysOnRelease { get; set; }
 
+        [JsonProperty("CycleHotkeysRequireEveFocus")]
+        public bool CycleHotkeysRequireEveFocus { get; set; }
+
         [JsonProperty("CycleGroups")]
         public List<CycleGroup> CycleGroups { get; set; } = new List<CycleGroup>();
 

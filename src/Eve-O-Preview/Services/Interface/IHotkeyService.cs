@@ -8,7 +8,8 @@ namespace EveOPreview.Services;
 // Platform-neutral boundary: shortcut names retain the profile's existing string format.
 // Native key codes, hook handles and message pumps belong entirely to the platform adapter.
 public enum HotkeyMode { Global, OperatingSystem }
-public sealed record HotkeyBinding(string Shortcut, Action Execute, bool OnRelease = false);
+// When returns false, the shortcut does nothing; with Global input the keys then reach the focused application.
+public sealed record HotkeyBinding(string Shortcut, Action Execute, bool OnRelease = false, Func<bool> When = null);
 
 public interface IHotkeyService : IDisposable
 {
