@@ -21,7 +21,7 @@ public sealed class AlertsView : UserControl, IWorkspaceLiveModule, IDisposable
 {
     public const string ModuleId = "Alerts";
     private static readonly double[] ScanSteps = [0.5, 1, 2, 3, 5];
-    private static readonly int[] ReminderSteps = [0, 15, 30, 60, 120];
+    private static readonly int[] ReminderSteps = [0, 5, 15, 30, 60, 120];
     private static readonly int[] VolumeSteps = [25, 50, 80, 100];
     private readonly IWorkspaceAlerts _alerts;
     private readonly WorkspaceLocalization _localization;
@@ -29,6 +29,7 @@ public sealed class AlertsView : UserControl, IWorkspaceLiveModule, IDisposable
     private readonly ComboBox _client = new() { Name = "alert-client", MinWidth = 260, MinHeight = 32 };
     private readonly CheckBox _paused = new() { Name = "alert-paused" };
     private readonly CheckBox _flash = new() { Name = "alert-flash" };
+    private readonly CheckBox _countAlarm = new() { Name = "alert-count-alarm" };
     private readonly ComboBox _scans = new() { Name = "alert-scans", MinHeight = 30 };
     private readonly ComboBox _reminder = new() { Name = "alert-reminder", MinHeight = 30 };
     private readonly ComboBox _volume = new() { Name = "alert-volume", MinHeight = 30 };
@@ -50,7 +51,7 @@ public sealed class AlertsView : UserControl, IWorkspaceLiveModule, IDisposable
         "Alarm when a non-friendly pilot appears in a character's Local, even while the client is in the background.", backend => new AlertsView(backend))
     {
         SearchTargets = [new("alerts", "Local alerts", ["alert", "alerts", "alarm", "local", "intel", "hostile", "neutral", "red", "standing",
-            "discord", "webhook", "eve alert", "count", "ratting", "warning"], () => { })]
+            "discord", "webhook", "eve alert", "count", "member count", "reminder", "ratting", "warning"], () => { })]
     };
 
     public AlertsView(IWorkspaceBackend backend)
@@ -65,12 +66,14 @@ public sealed class AlertsView : UserControl, IWorkspaceLiveModule, IDisposable
         _countHint = Muted("");
         _paused.Content = L("Pause all alerts");
         _flash.Content = L("Flash the preview of a character with someone in Local");
+        _countAlarm.Content = L("Alarm when the member count rises without a friendly icon");
         _webhookEnabled.Content = L("Post alerts to Discord");
         _scans.ItemsSource = ScanSteps.Select(v => string.Format(CultureInfo.CurrentCulture, L("{0} per second"), v)).ToArray();
         _reminder.ItemsSource = ReminderSteps.Select(v => v == 0 ? L("No reminders") : string.Format(CultureInfo.CurrentCulture, L("Every {0} s"), v)).ToArray();
         _volume.ItemsSource = VolumeSteps.Select(v => $"{v}%").ToArray();
         _paused.IsCheckedChanged += (_, _) => Option("paused", (_paused.IsChecked == true).ToString());
         _flash.IsCheckedChanged += (_, _) => Option("flash", (_flash.IsChecked == true).ToString());
+        _countAlarm.IsCheckedChanged += (_, _) => Option("count-alarm", (_countAlarm.IsChecked == true).ToString());
         _webhookEnabled.IsCheckedChanged += (_, _) => Option("webhook-enabled", (_webhookEnabled.IsChecked == true).ToString());
         _scans.SelectionChanged += (_, _) => { if (_scans.SelectedIndex >= 0) Option("scans", ScanSteps[_scans.SelectedIndex].ToString(CultureInfo.InvariantCulture)); };
         _reminder.SelectionChanged += (_, _) => { if (_reminder.SelectedIndex >= 0) Option("reminder", ReminderSteps[_reminder.SelectedIndex].ToString(CultureInfo.InvariantCulture)); };
@@ -95,6 +98,7 @@ public sealed class AlertsView : UserControl, IWorkspaceLiveModule, IDisposable
         root.Children.Add(Card("Alarm",
             Row(_paused),
             Row(_flash),
+            Row(_countAlarm),
             Row(Label("Scans"), _scans, Label("Reminder while someone stays"), _reminder),
             Row(Label("Alarm sound"), _sound, Button("Test", "alert-test-sound", () => Test("sound")),
                 Label("Count sound"), _countSound, Button("Test", "alert-test-count-sound", () => Test("count-sound"))),
@@ -125,6 +129,7 @@ public sealed class AlertsView : UserControl, IWorkspaceLiveModule, IDisposable
         _client.PlaceholderText = snapshot.Clients.Count == 0 ? L("No EVE client is running") : null;
         _countHint.Text = snapshot.CanReadCount ? L("Press Esc at the second step to skip the count.")
             : L("This system cannot read text, so only the member list is watched.");
+        _countAlarm.IsVisible = snapshot.CanReadCount;
         ApplyOptions(snapshot.Options);
         // Rebuild rows only when watches change, so an edited name is not replaced while typing.
         string signature = string.Join("|", snapshot.Watches.Select(w => $"{w.Id}:{w.Name}:{w.Enabled}:{w.HasCount}:{w.SourceTitle}"));
@@ -152,6 +157,8 @@ public sealed class AlertsView : UserControl, IWorkspaceLiveModule, IDisposable
         {
             _paused.IsChecked = options.Paused;
             _flash.IsChecked = options.FlashPreviews;
+            _countAlarm.IsChecked = options.CountAlarm;
+            _countSound.IsEnabled = options.CountAlarm;
             _webhookEnabled.IsChecked = options.WebhookEnabled;
             _scans.SelectedIndex = Nearest(ScanSteps, options.ScansPerSecond);
             _reminder.SelectedIndex = Nearest(ReminderSteps.Select(v => (double)v).ToArray(), options.ReminderSeconds);

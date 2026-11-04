@@ -23,7 +23,7 @@ public sealed record AlertWatchItem(string Id, string Name, string SourceTitle, 
 
 /// <summary>Sounds are "default", "none" or a .wav file path.</summary>
 public sealed record AlertOptionsItem(bool Paused, double ScansPerSecond, int ReminderSeconds, bool FlashPreviews,
-    string Sound, string CountSound, int Volume, string WebhookUrl, bool WebhookEnabled, string WebhookStatus);
+    string Sound, string CountSound, int Volume, string WebhookUrl, bool WebhookEnabled, string WebhookStatus, bool CountAlarm = true);
 
 public sealed record AlertSnapshot(AlertOptionsItem Options, IReadOnlyList<AlertWatchItem> Watches, IReadOnlyList<string> Clients,
     bool Selecting, bool CanReadCount);
@@ -40,7 +40,7 @@ public interface IWorkspaceAlerts
     Task<CommandResult> CreateAlertWatchAsync(string sourceTitle);
     /// <summary>Actions: rename (Value=name), enabled (true/false), reselect, copy-to-all, remove.</summary>
     Task<CommandResult> EditAlertWatchAsync(string id, string action, string value = "");
-    /// <summary>Keys: paused, scans, reminder, flash, sound, count-sound, volume, webhook-url, webhook-enabled.</summary>
+    /// <summary>Keys: paused, scans, reminder, flash, count-alarm, sound, count-sound, volume, webhook-url, webhook-enabled.</summary>
     Task<CommandResult> EditAlertOptionsAsync(string key, string value);
     /// <summary>Tests: sound, count-sound, webhook.</summary>
     Task<CommandResult> TestAlertAsync(string test);

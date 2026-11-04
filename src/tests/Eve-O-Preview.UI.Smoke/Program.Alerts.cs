@@ -42,8 +42,21 @@ internal static partial class Program
 
                 FindControl<CheckBox>(view, "alert-paused").IsChecked = true; Flush();
                 Require(backend.OptionEdits.Contains(("paused", "True")), "Pause all alerts must be sent.");
-                FindControl<ComboBox>(view, "alert-reminder").SelectedIndex = 3; Flush();
+                var reminder = FindControl<ComboBox>(view, "alert-reminder");
+                reminder.SelectedIndex = 1; Flush();
+                Require(backend.OptionEdits.Contains(("reminder", "5")) && backend.Options.ReminderSeconds == 5 && reminder.SelectedIndex == 1,
+                    "The shortest reminder must be every 5 seconds.");
+                reminder.SelectedIndex = 4; Flush();
                 Require(backend.OptionEdits.Contains(("reminder", "60")), "Choosing a reminder must send its seconds.");
+                var countAlarm = FindControl<CheckBox>(view, "alert-count-alarm");
+                Require(countAlarm.IsVisible == canReadCount, "The count alarm is offered only when the host can read text.");
+                Require(countAlarm.IsChecked == true && FindControl<ComboBox>(view, "alert-count-sound").IsEnabled, "The count alarm starts on.");
+                countAlarm.IsChecked = false; Flush();
+                Require(backend.OptionEdits.Contains(("count-alarm", "False")) && !FindControl<ComboBox>(view, "alert-count-sound").IsEnabled,
+                    "Turning the count alarm off must be sent and disable its sound.");
+                Capture(window, Path.Combine(output, theme.ToLowerInvariant() + "-alerts-count-off" + suffix + ".png")); renders++;
+                countAlarm.IsChecked = true; Flush();
+                Require(backend.Options.CountAlarm, "Turning the count alarm on again must be sent.");
                 FindControl<ComboBox>(view, "alert-volume").SelectedIndex = 1; Flush();
                 Require(backend.OptionEdits.Contains(("volume", "50")), "Choosing a volume must send its percentage.");
                 Require(backend.Options.Volume == 50 && FindControl<ComboBox>(view, "alert-volume").SelectedIndex == 1, "The page must follow the saved options.");
@@ -77,7 +90,7 @@ internal static partial class Program
                 window.Close();
             }
         }
-        Console.WriteLine("PASS: Local alerts page creation, live status, options, webhook, tests, watch edits, count capability and empty states.");
+        Console.WriteLine("PASS: Local alerts page creation, live status, options, count alarm, webhook, tests, watch edits, count capability and empty states.");
         return renders;
     }
 
@@ -122,6 +135,7 @@ internal static partial class Program
             Options = key switch
             {
                 "paused" => Options with { Paused = bool.Parse(value) },
+                "count-alarm" => Options with { CountAlarm = bool.Parse(value) },
                 "reminder" => Options with { ReminderSeconds = int.Parse(value, System.Globalization.CultureInfo.InvariantCulture) },
                 "volume" => Options with { Volume = int.Parse(value, System.Globalization.CultureInfo.InvariantCulture) },
                 "webhook-url" => Options with { WebhookUrl = value, WebhookEnabled = value.Length > 0 },

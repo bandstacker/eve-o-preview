@@ -59,6 +59,15 @@ public sealed class AlertWatchMonitor
     /// <summary>Silences reminders until the next arrival.</summary>
     public void Acknowledge() { if (IsAlarmed) IsAcknowledged = true; }
 
+    /// <summary>Drops the count and any arrival it reported; the next reading is a new baseline.</summary>
+    public void ForgetCount()
+    {
+        Count = null;
+        Unexplained = 0;
+        _pending = 0;
+        _countCandidate = (-1, 0);
+    }
+
     public IReadOnlyList<AlertEvent> Update(AlertObservation observation, DateTimeOffset now, int reminderSeconds)
     {
         var events = new List<AlertEvent>();
