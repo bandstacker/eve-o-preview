@@ -14,6 +14,8 @@ public sealed class GlobalPointerEventArgs(PointerButtons button, PointerButtons
     public int X => Location.X;
     public int Y => Location.Y;
     public ShortcutKeys Modifiers { get; } = modifiers;
+    /// <summary>Stopwatch timestamp of the native event, to order it against subscriptions.</summary>
+    public long Occurred { get; init; }
 }
 
 /// <summary>Global desktop-pixel gestures. Events run on the UI owner and subscriptions own the native hook.</summary>

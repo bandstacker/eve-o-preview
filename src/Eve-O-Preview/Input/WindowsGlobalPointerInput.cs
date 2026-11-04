@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Concurrent;
 using System.ComponentModel;
+using System.Diagnostics;
 using System.Drawing;
 using System.Runtime.InteropServices;
 using System.Threading;
@@ -22,7 +23,7 @@ public sealed class WindowsGlobalPointerInput : IGlobalPointerInput
     private readonly TaskCompletionSource _ready = new(TaskCreationOptions.RunContinuationsAsynchronously);
     private WindowsMessageWindow _window;
     private IntPtr _hook;
-    private EventHandler<GlobalPointerEventArgs> _move, _up;
+    private readonly PointerSubscribers _move = new(), _up = new();
     private bool _disposed;
     private int _generation;
 
@@ -31,8 +32,8 @@ public sealed class WindowsGlobalPointerInput : IGlobalPointerInput
         _logger = logger;
         _callback = Callback;
         _dispatch = new PointerDispatchQueue(action => Dispatcher.UIThread.Post(action, DispatcherPriority.Input),
-            () => Volatile.Read(ref _generation), args => { if (!_disposed) _move?.Invoke(this, args); },
-            args => { if (!_disposed) _up?.Invoke(this, args); });
+            () => Volatile.Read(ref _generation), args => { if (!_disposed) _move.Raise(this, args); },
+            args => { if (!_disposed) _up.Raise(this, args); });
         var desktop = GetThreadDesktop(GetCurrentThreadId());
         _thread = new Thread(() => Run(desktop)) { IsBackground = true, Name = "EVE-O pointer input" };
         _thread.SetApartmentState(ApartmentState.STA);
@@ -44,19 +45,19 @@ public sealed class WindowsGlobalPointerInput : IGlobalPointerInput
     {
         add
         {
-            Dispatcher.UIThread.VerifyAccess(); _move += value;
-            try { UpdateSubscription(); } catch { _move -= value; throw; }
+            Dispatcher.UIThread.VerifyAccess(); _move.Add(value);
+            try { UpdateSubscription(); } catch { _move.Remove(value); throw; }
         }
-        remove { Dispatcher.UIThread.VerifyAccess(); _move -= value; UpdateSubscription(removing: true); }
+        remove { Dispatcher.UIThread.VerifyAccess(); _move.Remove(value); UpdateSubscription(removing: true); }
     }
     public event EventHandler<GlobalPointerEventArgs> MouseUp
     {
         add
         {
-            Dispatcher.UIThread.VerifyAccess(); _up += value;
-            try { UpdateSubscription(); } catch { _up -= value; throw; }
+            Dispatcher.UIThread.VerifyAccess(); _up.Add(value);
+            try { UpdateSubscription(); } catch { _up.Remove(value); throw; }
         }
-        remove { Dispatcher.UIThread.VerifyAccess(); _up -= value; UpdateSubscription(removing: true); }
+        remove { Dispatcher.UIThread.VerifyAccess(); _up.Remove(value); UpdateSubscription(removing: true); }
     }
     public Point Position
     {
@@ -75,7 +76,7 @@ public sealed class WindowsGlobalPointerInput : IGlobalPointerInput
             if (removing) return;
             throw new ObjectDisposedException(nameof(WindowsGlobalPointerInput));
         }
-        bool listen = _move != null || _up != null;
+        bool listen = !_move.IsEmpty || !_up.IsEmpty;
         try { Invoke(() =>
         {
             if (listen && _hook == IntPtr.Zero)
@@ -105,7 +106,7 @@ public sealed class WindowsGlobalPointerInput : IGlobalPointerInput
                 var position = new Point(Marshal.ReadInt32(data), Marshal.ReadInt32(data, 4));
                 var button = id switch { 0x202 => PointerButtons.Left, 0x205 => PointerButtons.Right, 0x208 => PointerButtons.Middle,
                     0x20C => (Marshal.ReadInt32(data, 8) >> 16) == 1 ? PointerButtons.XButton1 : PointerButtons.XButton2, _ => PointerButtons.None };
-                _dispatch.Enqueue(position, button, Buttons & ~button, Modifiers, Volatile.Read(ref _generation));
+                _dispatch.Enqueue(position, button, Buttons & ~button, Modifiers, Volatile.Read(ref _generation), Stopwatch.GetTimestamp());
             }
         }
         catch (Exception ex) { ThreadPool.QueueUserWorkItem(_ => _logger.Error(ex, "Pointer callback failed")); }
@@ -157,7 +158,7 @@ public sealed class WindowsGlobalPointerInput : IGlobalPointerInput
             if (_thread.IsAlive) Invoke(() => { try { RemoveHook(); } finally { WindowsMessageWindow.ExitThread(); } });
         }
         catch (Exception ex) { _logger.Warning(ex, "Pointer input was unavailable during disposal"); }
-        _disposed = true; _move = null; _up = null;
+        _disposed = true; _move.Clear(); _up.Clear();
         Interlocked.Increment(ref _generation);
         _thread.Join(TimeSpan.FromSeconds(2));
     }

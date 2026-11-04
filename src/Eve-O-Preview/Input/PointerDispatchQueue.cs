@@ -15,16 +15,16 @@ internal sealed class PointerDispatchQueue
     private PointerSample _latestMove;
     private int _head, _count;
     private bool _hasMove, _pending;
-    private readonly record struct PointerSample(Point Position, PointerButtons Button, PointerButtons Buttons, ShortcutKeys Modifiers, int Generation);
+    private readonly record struct PointerSample(Point Position, PointerButtons Button, PointerButtons Buttons, ShortcutKeys Modifiers, int Generation, long Occurred);
 
     public PointerDispatchQueue(Action<Action> post, Func<int> generation, Action<GlobalPointerEventArgs> move, Action<GlobalPointerEventArgs> up)
     {
         _post = post; _generation = generation; _move = move; _up = up; _drain = Drain;
     }
 
-    public void Enqueue(Point position, PointerButtons button, PointerButtons buttons, ShortcutKeys modifiers, int generation)
+    public void Enqueue(Point position, PointerButtons button, PointerButtons buttons, ShortcutKeys modifiers, int generation, long occurred = 0)
     {
-        var sample = new PointerSample(position, button, buttons, modifiers, generation);
+        var sample = new PointerSample(position, button, buttons, modifiers, generation, occurred);
         bool post;
         // No callbacks, native calls or waits under the packet-copy gate.
         lock (_gate)
@@ -54,7 +54,7 @@ internal sealed class PointerDispatchQueue
                 else { _pending = false; return; }
             }
             if (sample.Generation != _generation()) continue;
-            var args = new GlobalPointerEventArgs(sample.Button, sample.Buttons, sample.Position, sample.Modifiers);
+            var args = new GlobalPointerEventArgs(sample.Button, sample.Buttons, sample.Position, sample.Modifiers) { Occurred = sample.Occurred };
             _move(args);
             if (sample.Button != PointerButtons.None && sample.Generation == _generation()) _up(args);
         }
