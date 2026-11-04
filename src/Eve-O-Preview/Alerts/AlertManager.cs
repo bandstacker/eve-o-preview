@@ -273,7 +273,7 @@ public sealed class AlertManager : IDisposable
             ulong print = list.Fingerprint();
             scan = print == runner.ListPrint ? runner.Scan : StandingDetector.Detect(list);
             runner.ListPrint = print;
-            if (watch.CountRead is { } countArea && _platform.CanRecognizeText)
+            if (options.CountAlarm && watch.CountRead is { } countArea && _platform.CanRecognizeText)
             {
                 var countFrame = sample.Frame.Crop(countArea, origin);
                 ulong countPrint = countFrame.Fingerprint();
@@ -293,6 +293,7 @@ public sealed class AlertManager : IDisposable
         {
             if (runner.Disposed) return;
             if (scan != null) { runner.Scan = scan; runner.List = list; }
+            if (!options.CountAlarm) runner.Monitor.ForgetCount();
             foreach (var e in runner.Monitor.Update(new(sample.State, scan, count), DateTimeOffset.UtcNow, options.ReminderSeconds))
                 outputs.Add((runner, e));
         }
@@ -377,7 +378,7 @@ public sealed class AlertManager : IDisposable
         {
             var o = _document.Options;
             var options = new AlertOptionsItem(o.Paused, o.ScansPerSecond, o.ReminderSeconds, o.FlashPreviews, o.Sound, o.CountSound,
-                o.Volume, o.WebhookUrl, o.WebhookEnabled, _webhookStatus);
+                o.Volume, o.WebhookUrl, o.WebhookEnabled, _webhookStatus, o.CountAlarm);
             return new(options, _document.Watches.Select(Item).ToArray(), clients, _selecting, _platform.CanRecognizeText);
         }
     }
@@ -397,7 +398,7 @@ public sealed class AlertManager : IDisposable
             if (!m.HasLiveFrame) return Make(AlertWatchStatus.Starting, "Starting capture...");
             if (m.IsActive) return Make(AlertWatchStatus.Alarm, m.Describe() + (m.IsAcknowledged ? " (acknowledged)" : ""), m.Hostile, m.Friendly, m.Count, m.Unexplained);
             var parts = new List<string> { m.LastScan.Icons.Count == 0 ? "No standing icons visible" : $"{m.Friendly} friendly" };
-            if (hasCount) parts.Add(m.Count is { } count ? $"Local {count}" : "count not read yet");
+            if (hasCount && _document.Options.CountAlarm) parts.Add(m.Count is { } count ? $"Local {count}" : "count not read yet");
             return Make(AlertWatchStatus.Clear, "Clear · " + string.Join(" · ", parts), m.Hostile, m.Friendly, m.Count, m.Unexplained);
         }
     }
@@ -527,6 +528,7 @@ public sealed class AlertManager : IDisposable
         {
             case "paused" when Flag(out bool paused): options = options with { Paused = paused }; break;
             case "flash" when Flag(out bool flash): options = options with { FlashPreviews = flash }; break;
+            case "count-alarm" when Flag(out bool countAlarm): options = options with { CountAlarm = countAlarm }; break;
             case "scans" when double.TryParse(value, NumberStyles.Float, CultureInfo.InvariantCulture, out double scans) && scans is >= 0.5 and <= 5:
                 options = options with { ScansPerSecond = scans }; break;
             case "reminder" when int.TryParse(value, NumberStyles.Integer, CultureInfo.InvariantCulture, out int seconds) && seconds is >= 0 and <= 600:
@@ -598,11 +600,12 @@ public sealed class AlertManager : IDisposable
     public byte[] ReadView(string id)
     {
         Runner runner;
-        lock (_gate) _runners.TryGetValue(id, out runner);
+        bool countAlarm;
+        lock (_gate) { _runners.TryGetValue(id, out runner); countAlarm = _document.Options.CountAlarm; }
         if (runner == null) return null;
         AlertFrame list, count;
         StandingScan scan;
-        lock (runner.Lock) { list = runner.List; scan = runner.Scan; count = runner.Watch.Count is { IsUsable: true } ? runner.CountFrame : null; }
+        lock (runner.Lock) { list = runner.List; scan = runner.Scan; count = countAlarm && runner.Watch.Count is { IsUsable: true } ? runner.CountFrame : null; }
         if (list is null) return null;
         var annotated = StandingDetector.Annotate(list, scan);
         return AlertPng.Encode(count is null ? annotated : AlertFrame.Stack(count, annotated));

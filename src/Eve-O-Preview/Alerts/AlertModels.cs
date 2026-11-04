@@ -60,6 +60,8 @@ public sealed record AlertOptions
     /// <summary>Seconds between reminder sounds while someone is still in Local; 0 turns reminders off.</summary>
     public int ReminderSeconds { get; init; } = 30;
     public bool FlashPreviews { get; init; } = true;
+    /// <summary>Reads the member count and alarms when it rises without a new icon.</summary>
+    public bool CountAlarm { get; init; } = true;
     public string Sound { get; init; } = DefaultSound;
     public string CountSound { get; init; } = DefaultSound;
     public int Volume { get; init; } = 80;

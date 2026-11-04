@@ -43,12 +43,13 @@ public sealed record StandingScan(IReadOnlyList<StandingIcon> Icons)
 /// Finds EVE standing icons in a Local member list by colour and shape, independent of UI scale:
 /// a filled, roughly square patch of one standing colour, optionally with a white glyph inside.
 /// Calibrated on client icons (neutral fill #6E6E6E with a #8C8C8C rim; terrible fill #750A0A
-/// with a #950606 rim; white glyphs). Text, row highlights and scroll bars fail the shape tests.
+/// with a #950606 rim; white glyphs). Row highlights and scroll bars fail the shape tests, and
+/// grey text fails the stricter test for the neutral icon.
 /// </summary>
 public static class StandingDetector
 {
     private const byte Background = 0, Glyph = 1, ClassBase = 2;
-    private const int MinimumSize = 5, MaximumSize = 72, MinimumPixels = 6, ShadeWindow = 20;
+    private const int MinimumSize = 5, MaximumSize = 72, MinimumPixels = 6, ShadeWindow = 20, MinimumNeutralSize = 9;
 
     public static StandingScan Detect(AlertFrame frame)
     {
@@ -89,24 +90,24 @@ public static class StandingDetector
                     }
                 }
             if ((c.Count + glyph) / area < 0.75) continue;
+            var color = (StandingColor)(c.Class - ClassBase);
             // Icons are filled with one flat shade (neutral #6E6E6E); anti-aliased text spreads over many.
             // A sliding window of brightness levels, so a fill near any fixed boundary still counts as one shade.
+            // Coloured icons get more room: some are textured, and a missed hostile is the costly mistake.
             int dominant = 0, window = 0;
             for (int v = 0; v < 256; v++)
             {
                 window += shades[v] - (v >= ShadeWindow ? shades[v - ShadeWindow] : 0);
                 dominant = Math.Max(dominant, window);
             }
-            if (dominant < inside * 0.45) continue;
+            if (dominant < inside * (color == StandingColor.Grey ? 0.45 : 0.30)) continue;
             // Icons have a solid rim of their colour; a text glyph (anti-aliased grey around a white
             // core, for example "a") touches its bounding box only in a few places.
             int rim = 0;
             for (int x = c.MinX; x <= c.MaxX; x++) rim += (classes[c.MinY * width + x] == c.Class ? 1 : 0) + (classes[c.MaxY * width + x] == c.Class ? 1 : 0);
             for (int y = c.MinY + 1; y < c.MaxY; y++) rim += (classes[y * width + c.MinX] == c.Class ? 1 : 0) + (classes[y * width + c.MaxX] == c.Class ? 1 : 0);
             if (rim < (2 * w + 2 * h - 4) * 0.6) continue;
-            var color = (StandingColor)(c.Class - ClassBase);
-            // Plain grey panels and buttons are common in EVE's UI; the neutral icon has its "=" glyph.
-            if (color == StandingColor.Grey && glyph < area * 0.04) continue;
+            if (color == StandingColor.Grey && !IsNeutralIcon(frame, classes, c, w, h)) continue;
             icons.Add(new(c.MinX, c.MinY, w, h, color));
         }
         // A rim and fill of different shades can produce nested candidates; keep the outer one.
@@ -118,6 +119,71 @@ public static class StandingDetector
             })
             .OrderBy(i => i.Y).ThenBy(i => i.X).ToArray();
         return new(result);
+    }
+
+    /// <summary>
+    /// Grey panels and letters of pilot names look like the neutral icon to the tests above: hinted strokes
+    /// are one flat shade, fill most of their box and can have a bright spot. Only the whole icon sets it
+    /// apart: square and at least 9 px (12 at 100% UI scale, 11 at the lowest), an unbroken rim with nothing
+    /// bright on it, no background inside and the two bars of its "=" across the middle.
+    /// </summary>
+    private static bool IsNeutralIcon(AlertFrame frame, byte[] classes, Component c, int w, int h)
+    {
+        if (Math.Min(w, h) < MinimumNeutralSize || Math.Max(w, h) > Math.Min(w, h) * 1.2) return false;
+        int width = frame.Width;
+        // The corners are rounded, so they may hold background.
+        int corner = Math.Max(1, Math.Min(w, h) / 6), rim = 0, rimGrey = 0;
+        for (int x = c.MinX + corner; x <= c.MaxX - corner; x++)
+        {
+            rim += 2;
+            rimGrey += (classes[c.MinY * width + x] == c.Class ? 1 : 0) + (classes[c.MaxY * width + x] == c.Class ? 1 : 0);
+        }
+        for (int y = c.MinY + corner; y <= c.MaxY - corner; y++)
+        {
+            rim += 2;
+            rimGrey += (classes[y * width + c.MinX] == c.Class ? 1 : 0) + (classes[y * width + c.MaxX] == c.Class ? 1 : 0);
+        }
+        if (rimGrey < rim * 0.85) return false;
+        int inside = 0, empty = 0;
+        for (int y = c.MinY + 1; y < c.MaxY; y++)
+            for (int x = c.MinX + 1; x < c.MaxX; x++)
+            {
+                bool cornerColumn = x < c.MinX + corner || x > c.MaxX - corner, cornerRow = y < c.MinY + corner || y > c.MaxY - corner;
+                if (cornerColumn && cornerRow) continue;
+                inside++;
+                if (classes[y * width + x] == Background) empty++;
+            }
+        if (empty > inside * 0.02) return false;
+        return CountBars(frame, c, w) == 2;
+    }
+
+    /// <summary>The bright horizontal bands inside the rim, read down the middle third of the icon.</summary>
+    private static int CountBars(AlertFrame frame, Component c, int w)
+    {
+        int from = c.MinX + w / 3, to = c.MaxX - w / 3, low = 255, high = 0;
+        Span<int> rows = stackalloc int[c.MaxY - c.MinY - 1];
+        for (int y = c.MinY + 1; y < c.MaxY; y++)
+        {
+            int sum = 0;
+            for (int x = from; x <= to; x++)
+            {
+                int i = y * frame.Stride + x * 4;
+                sum += Math.Max(frame.Pixels[i], Math.Max(frame.Pixels[i + 1], frame.Pixels[i + 2]));
+            }
+            int shade = sum / (to - from + 1);
+            rows[y - c.MinY - 1] = shade;
+            low = Math.Min(low, shade);
+            high = Math.Max(high, shade);
+        }
+        if (high - low < 48) return 0;
+        int threshold = (low + high) / 2, bars = 0;
+        bool bright = false;
+        foreach (int shade in rows)
+        {
+            if (shade >= threshold && !bright) bars++;
+            bright = shade >= threshold;
+        }
+        return bars;
     }
 
     internal static byte Classify(byte r, byte g, byte b)
