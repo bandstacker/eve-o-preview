@@ -288,7 +288,7 @@ Local alerts start at [AlertsView](../../Eve-O-Preview.UI/AlertsView.cs) and [Al
 | --- | --- |
 | [ShortcutKeys.cs](../../Eve-O-Preview/Input/ShortcutKeys.cs), [ShortcutText.cs](../../Eve-O-Preview/Input/ShortcutText.cs) | Platform-neutral numeric shortcut values and legacy serialized-name compatibility |
 | [IGlobalPointerInput.cs](../../Eve-O-Preview/Input/IGlobalPointerInput.cs) | Physical screen-pixel movement/release contract |
-| [WindowsGlobalPointerInput.cs](../../Eve-O-Preview/Input/WindowsGlobalPointerInput.cs), [PointerDispatchQueue.cs](../../Eve-O-Preview/Input/PointerDispatchQueue.cs) | Dedicated native hook thread, bounded/coalesced UI dispatch and subscription lifetime |
+| [WindowsGlobalPointerInput.cs](../../Eve-O-Preview/Input/WindowsGlobalPointerInput.cs), [PointerDispatchQueue.cs](../../Eve-O-Preview/Input/PointerDispatchQueue.cs), [PointerSubscribers.cs](../../Eve-O-Preview/Input/PointerSubscribers.cs) | Dedicated native hook thread, bounded/coalesced UI dispatch and subscription lifetime |
 | [WindowsMessageWindow.cs](../../Eve-O-Preview/Input/WindowsMessageWindow.cs) | Framework-free message-only HWND and owner-thread pump |
 | [WindowsSessionLifetime.cs](../../Eve-O-Preview/ApplicationBase/WindowsSessionLifetime.cs) | Query/cancel/confirmed session handling for workspace and Avalonia dispatcher HWND |
 | [DesktopValidation.cs](../../Eve-O-Preview/ApplicationBase/DesktopValidation.cs) | Isolated actual-desktop-loop validation of themes, SQLite and live/static native hosts |

@@ -23,5 +23,6 @@
     <Compile Include="../Eve-O-Preview.Tests/Checks/UsePreviewForAllTests.cs" Link="Shared/UsePreviewForAllTests.cs" />
     <Compile Include="../Eve-O-Preview.Tests/Checks/CycleFocusTests.cs" Link="Shared/CycleFocusTests.cs" />
     <Compile Include="../Eve-O-Preview.Tests/Checks/AlertTests.cs" Link="Shared/AlertTests.cs" />
+    <Compile Include="../Eve-O-Preview.Tests/Checks/PointerSubscriberTests.cs" Link="Shared/PointerSubscriberTests.cs" />
   </ItemGroup>
 </Project>

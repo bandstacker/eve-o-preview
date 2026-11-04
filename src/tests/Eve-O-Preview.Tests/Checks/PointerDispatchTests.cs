@@ -43,12 +43,12 @@ public sealed class PointerDispatchTests(ITestOutputHelper output)
         input.MouseUp -= handler;
         Assert.True(elapsed.Elapsed < TimeSpan.FromSeconds(1));
         Assert.Throws<InvalidOperationException>(() => input.MouseMove += handler);
-        Assert.Null(Field("_move")); // A failed add must not retain the owner.
+        Assert.True(((PointerSubscribers)Field("_move")).IsEmpty); // A failed add must not retain the owner.
         TestAvalonia.Pump();
         Assert.Equal(0, delivered);
         input.Dispose(); // Disposal also tolerates the unavailable native thread.
         Assert.Throws<ObjectDisposedException>(() => input.MouseUp += handler);
-        Assert.Null(Field("_up"));
+        Assert.True(((PointerSubscribers)Field("_up")).IsEmpty);
     }
 
     [DllImport("user32.dll")] private static extern uint GetWindowThreadProcessId(IntPtr window, out uint process);
